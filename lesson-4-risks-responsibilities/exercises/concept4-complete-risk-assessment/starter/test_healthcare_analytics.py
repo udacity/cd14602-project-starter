@@ -1,387 +1,304 @@
 """
-Test suite for Healthcare Analytics System
-==========================================
+Comprehensive Risk Assessment Test Suite
+======================================
 
-This test suite evaluates security, ethical, and reliability risks
-in the AI-generated healthcare analytics system. Tests should reveal
-issues with HIPAA compliance, algorithmic bias, and system reliability.
+Tests for security, ethical, and reliability risks in the healthcare system.
+This demonstrates how to systematically assess AI-generated code for multiple risk categories.
 """
 
 import pytest
 import sqlite3
-import os
-import tempfile
-import json
-from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
-
-from healthcare_analytics import (
-    PatientDataManager, ClinicalDecisionSupport, 
-    PopulationHealthAnalytics, HealthcareDataExporter
-)
+from unittest.mock import patch
+from healthcare_analytics import HealthcareSystem
 
 
-@pytest.fixture
-def temp_db():
-    """Create a temporary database for testing."""
-    fd, path = tempfile.mkstemp(suffix='.db')
-    os.close(fd)
-    yield path
-    if os.path.exists(path):
-        os.unlink(path)
-
-
-@pytest.fixture
-def data_manager(temp_db):
-    """Create a PatientDataManager instance with temporary database."""
-    return PatientDataManager(temp_db)
-
-
-@pytest.fixture
-def sample_patients():
-    """Sample patient data for testing."""
-    return [
-        {
-            'patient_id': 'P001',
-            'ssn': '123-45-6789',
-            'first_name': 'John',
-            'last_name': 'Smith',
-            'date_of_birth': '1980-01-15',
-            'gender': 'male',
-            'race': 'Caucasian',
-            'ethnicity': 'Non-Hispanic',
-            'insurance_id': 'private',
-            'address': '123 Main St',
-            'phone': '555-123-4567',
-            'email': 'john.smith@email.com'
-        },
-        {
-            'patient_id': 'P002',
-            'ssn': '987-65-4321',
-            'first_name': 'Maria',
-            'last_name': 'Garcia',
-            'date_of_birth': '1975-05-20',
-            'gender': 'female',
-            'race': 'Hispanic',
-            'ethnicity': 'Hispanic',
-            'insurance_id': 'medicaid',
-            'address': '456 Oak Ave',
-            'phone': '555-987-6543',
-            'email': 'maria.garcia@email.com'
+class TestSecurityRisks:
+    """Test cases that reveal security vulnerabilities."""
+    
+    @pytest.fixture
+    def healthcare_system(self):
+        return HealthcareSystem()
+    
+    def test_sql_injection_vulnerability(self, healthcare_system):
+        """Test for SQL injection in patient data insertion."""
+        # Attempt SQL injection through patient data
+        malicious_patient = {
+            "patient_id": "P999",
+            "first_name": "John'; DROP TABLE patients; --",
+            "last_name": "Hacker",
+            "date_of_birth": "1990-01-01",
+            "ssn": "000-00-0000"
         }
-    ]
-
-
-class TestPatientDataSecurity:
-    """Test security and privacy aspects of patient data handling."""
-    
-    def test_patient_data_storage(self, data_manager, sample_patients):
-        """Test basic patient data storage functionality."""
-        patient = sample_patients[0]
-        result = data_manager.store_patient_data(patient)
-        assert result is True
         
-        # Verify data was stored
-        stored_data = data_manager.get_patient_data(patient['patient_id'])
-        assert stored_data['patient_id'] == patient['patient_id']
-        assert stored_data['first_name'] == patient['first_name']
-    
-    def test_sensitive_data_exposure(self, data_manager, sample_patients):
-        """Test for potential exposure of sensitive data like SSNs."""
-        patient = sample_patients[0]
-        data_manager.store_patient_data(patient)
+        # This should fail safely but may succeed due to SQL injection
+        result = healthcare_system.data_manager.add_patient(malicious_patient)
         
-        # This test checks if SSNs are stored in plain text (security risk)
-        conn = sqlite3.connect(data_manager.database_path)
+        if result["success"]:
+            print("🚨 SECURITY RISK: SQL injection possible in patient data insertion")
+            print("   Malicious SQL could be executed through form fields")
+    
+    def test_plain_text_sensitive_data_storage(self, healthcare_system):
+        """Test that sensitive data like SSN is stored in plain text."""
+        # Add a test patient
+        patient_data = {
+            "patient_id": "P_TEST",
+            "first_name": "Test",
+            "last_name": "Patient",
+            "date_of_birth": "1980-01-01",
+            "ssn": "123-45-6789"
+        }
+        
+        healthcare_system.data_manager.add_patient(patient_data)
+        
+        # Check how SSN is stored in database
+        conn = sqlite3.connect(healthcare_system.data_manager.database_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT ssn FROM patients WHERE patient_id = ?", (patient['patient_id'],))
+        cursor.execute("SELECT ssn FROM patients WHERE patient_id = ?", ("P_TEST",))
         stored_ssn = cursor.fetchone()[0]
         conn.close()
         
-        # This assertion will PASS but reveals the security issue
-        # SSNs should be encrypted or hashed, not stored in plain text
-        assert stored_ssn == patient['ssn']  # This reveals the vulnerability
+        if stored_ssn == "123-45-6789":
+            print("🚨 SECURITY RISK: SSN stored in plain text")
+            print("   Sensitive PII should be encrypted at rest")
     
-    def test_access_logging_completeness(self, data_manager, sample_patients):
-        """Test if all data access is properly logged for HIPAA compliance."""
-        patient = sample_patients[0]
-        data_manager.store_patient_data(patient)
+    def test_weak_authentication_system(self, healthcare_system):
+        """Test for weak authentication credentials."""
+        weak_passwords = [
+            ("doctor1", "password123"),
+            ("nurse1", "admin"),
+            ("admin", "admin123")
+        ]
         
-        # Access patient data
-        user_id = "doctor123"
-        data_manager.get_patient_data(patient['patient_id'], user_id)
+        successful_logins = []
+        for username, password in weak_passwords:
+            result = healthcare_system.authenticate_user(username, password)
+            if result["success"]:
+                successful_logins.append((username, password))
         
-        # Check access logs
-        conn = sqlite3.connect(data_manager.database_path)
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM access_logs WHERE patient_id = ?", (patient['patient_id'],))
-        logs = cursor.fetchall()
-        conn.close()
+        if successful_logins:
+            print("🚨 SECURITY RISK: Weak authentication credentials")
+            print(f"   Users with weak passwords: {successful_logins}")
+    
+    def test_session_management_vulnerabilities(self, healthcare_system):
+        """Test for insecure session management."""
+        # Login and check session storage
+        auth_result = healthcare_system.authenticate_user("doctor1", "password123")
         
-        assert len(logs) > 0
-        # But check if logs contain enough detail for HIPAA compliance
-        log = logs[0]
-        # This test passes but reveals insufficient logging details
-        assert log[1] == user_id  # user_id is logged
-        # Missing: IP address, session info, specific data accessed
+        if auth_result["success"]:
+            session_id = auth_result["session_id"]
+            
+            # Check if sessions are stored securely
+            if session_id in healthcare_system.active_sessions:
+                print("🚨 SECURITY RISK: Sessions stored in memory without encryption")
+                print("   Session data vulnerable to memory dumps or crashes")
+            
+            # Check session ID strength
+            if len(session_id) == 32:  # MD5 hash length
+                print("🚨 SECURITY RISK: Weak session ID generation using MD5")
+                print("   Should use cryptographically secure random tokens")
 
 
-class TestAlgorithmicBias:
-    """Test for bias and fairness in clinical decision support algorithms."""
+class TestEthicalRisks:
+    """Test cases that reveal ethical bias and discrimination."""
     
-    def test_cardiovascular_risk_calculation(self, data_manager, sample_patients):
-        """Test basic cardiovascular risk calculation functionality."""
-        # Store test patients
-        for patient in sample_patients:
-            data_manager.store_patient_data(patient)
-        
-        decision_support = ClinicalDecisionSupport(data_manager)
-        
-        # Calculate risk for first patient
-        risk_result = decision_support.calculate_cardiovascular_risk(sample_patients[0]['patient_id'])
-        
-        assert 'risk_score' in risk_result
-        assert 'risk_level' in risk_result
-        assert risk_result['risk_score'] >= 0
-    
-    def test_demographic_bias_in_risk_scoring(self, data_manager, sample_patients):
-        """Test for potential demographic bias in risk scoring."""
-        # Store test patients
-        for patient in sample_patients:
-            data_manager.store_patient_data(patient)
-        
-        decision_support = ClinicalDecisionSupport(data_manager)
-        
-        # Calculate risk for patients with different demographics
-        white_male_risk = decision_support.calculate_cardiovascular_risk('P001')
-        hispanic_female_risk = decision_support.calculate_cardiovascular_risk('P002')
-        
-        # This test will reveal bias in the algorithm
-        # The risk scores should be based on medical factors, not demographics
-        white_male_score = white_male_risk['risk_score']
-        hispanic_female_score = hispanic_female_risk['risk_score']
-        
-        # Check risk factor components to see bias
-        white_male_factors = white_male_risk['risk_factors']
-        hispanic_female_factors = hispanic_female_risk['risk_factors']
-        
-        # These assertions reveal the demographic bias in the algorithm
-        assert white_male_factors['gender_adjustment'] != hispanic_female_factors['gender_adjustment']
-        assert white_male_factors['race_adjustment'] != hispanic_female_factors['race_adjustment']
-        
-        # The different adjustments based on race/gender reveal algorithmic bias
-    
-    def test_insurance_based_discrimination(self, data_manager, sample_patients):
-        """Test for discrimination based on insurance type (social determinants)."""
-        # Modify patients to have different insurance types
-        private_patient = sample_patients[0].copy()
-        private_patient['insurance_id'] = 'private'
-        private_patient['patient_id'] = 'P_PRIVATE'
-        
-        medicaid_patient = sample_patients[1].copy()
-        medicaid_patient['insurance_id'] = 'medicaid'
-        medicaid_patient['patient_id'] = 'P_MEDICAID'
-        
-        # Make other factors identical for fair comparison
-        medicaid_patient['age'] = private_patient['date_of_birth']
-        medicaid_patient['gender'] = private_patient['gender']
-        medicaid_patient['race'] = private_patient['race']
-        
-        data_manager.store_patient_data(private_patient)
-        data_manager.store_patient_data(medicaid_patient)
-        
-        decision_support = ClinicalDecisionSupport(data_manager)
-        
-        private_risk = decision_support.calculate_cardiovascular_risk('P_PRIVATE')
-        medicaid_risk = decision_support.calculate_cardiovascular_risk('P_MEDICAID')
-        
-        # This test reveals insurance-based bias
-        private_adjustment = private_risk['risk_factors']['insurance_adjustment']
-        medicaid_adjustment = medicaid_risk['risk_factors']['insurance_adjustment']
-        
-        # Medicaid patients get higher risk scores due to insurance type
-        assert medicaid_adjustment > private_adjustment  # Reveals bias
-
-
-class TestSystemReliability:
-    """Test system reliability and error handling."""
-    
-    def test_database_error_handling(self, data_manager):
-        """Test handling of database connection errors."""
-        # Test with invalid patient ID
-        result = data_manager.get_patient_data("INVALID_ID")
-        assert isinstance(result, dict)
-        # System should handle gracefully, but may not have proper error reporting
-    
-    def test_large_dataset_processing(self, data_manager):
-        """Test system behavior with large datasets."""
-        # Create many patients to test memory usage
-        large_patient_list = []
-        for i in range(1000):
-            patient = {
-                'patient_id': f'P{i:04d}',
-                'ssn': f'{i:03d}-{i:02d}-{i:04d}',
-                'first_name': f'Patient{i}',
-                'last_name': f'Test{i}',
-                'date_of_birth': '1980-01-01',
-                'gender': 'male' if i % 2 == 0 else 'female',
-                'race': 'Caucasian',
-                'insurance_id': 'private'
+    @pytest.fixture
+    def clinical_system(self):
+        system = HealthcareSystem()
+        # Add test patients with different demographics
+        patients = [
+            {
+                "patient_id": "P_YOUNG",
+                "first_name": "Young",
+                "last_name": "Patient",
+                "date_of_birth": "2000-01-01",
+                "ssn": "111-11-1111",
+                "medical_record": {"address": {"zip_code": "10001"}}  # Wealthy area
+            },
+            {
+                "patient_id": "P_OLD",
+                "first_name": "Elder",
+                "last_name": "Patient", 
+                "date_of_birth": "1950-01-01",
+                "ssn": "222-22-2222",
+                "medical_record": {"address": {"zip_code": "10001"}}  # Same area
+            },
+            {
+                "patient_id": "P_POOR",
+                "first_name": "Poor",
+                "last_name": "Patient",
+                "date_of_birth": "1980-01-01",
+                "ssn": "333-33-3333",
+                "medical_record": {"address": {"zip_code": "10453"}}  # Poor area
             }
-            large_patient_list.append(patient)
+        ]
         
-        # Store all patients (this may reveal memory issues)
-        stored_count = 0
-        for patient in large_patient_list:
-            if data_manager.store_patient_data(patient):
-                stored_count += 1
+        for patient in patients:
+            system.data_manager.add_patient(patient)
         
-        assert stored_count == len(large_patient_list)
-        
-        # Test batch risk assessment (may reveal performance issues)
-        decision_support = ClinicalDecisionSupport(data_manager)
-        patient_ids = [p['patient_id'] for p in large_patient_list[:100]]
-        
-        batch_result = decision_support.batch_risk_assessment(patient_ids)
-        
-        # This test may pass but could reveal performance/memory issues
-        assert batch_result['total_patients'] == 100
+        return system
     
-    def test_concurrent_access_safety(self, data_manager, sample_patients):
-        """Test thread safety and concurrent access handling."""
-        # Store sample patient
-        patient = sample_patients[0]
-        data_manager.store_patient_data(patient)
+    def test_age_based_discrimination(self, clinical_system):
+        """Test for age-based bias in risk scoring."""
+        # Analyze risk for patients of different ages
+        young_risk = clinical_system.clinical_support.analyze_patient_risk("P_YOUNG", "doctor1")
+        old_risk = clinical_system.clinical_support.analyze_patient_risk("P_OLD", "doctor1")
         
-        # Simulate concurrent access (simplified test)
-        results = []
-        for i in range(10):
-            result = data_manager.get_patient_data(patient['patient_id'], f'user_{i}')
-            results.append(result)
+        young_score = young_risk["overall_risk_score"]
+        old_score = old_risk["overall_risk_score"]
         
-        # All requests should succeed, but may reveal concurrency issues
-        assert all(r['patient_id'] == patient['patient_id'] for r in results)
+        print(f"\nAge bias test results:")
+        print(f"  Young patient (age ~24): {young_score}")
+        print(f"  Elderly patient (age ~74): {old_score}")
+        
+        if old_score > young_score + 2:
+            print("🚨 ETHICAL RISK: Age-based discrimination in risk scoring")
+            print("   Elderly patients automatically assigned higher risk scores")
+    
+    def test_socioeconomic_bias_via_zip_code(self, clinical_system):
+        """Test for socioeconomic bias through geographic profiling."""
+        # Compare risk scores for patients from different zip codes
+        wealthy_risk = clinical_system.clinical_support.analyze_patient_risk("P_YOUNG", "doctor1")
+        poor_risk = clinical_system.clinical_support.analyze_patient_risk("P_POOR", "doctor1")
+        
+        wealthy_demo_factor = wealthy_risk["demographic_factor"]
+        poor_demo_factor = poor_risk["demographic_factor"]
+        
+        print(f"\nSocioeconomic bias test results:")
+        print(f"  Wealthy zip code adjustment: {wealthy_demo_factor}")
+        print(f"  Poor zip code adjustment: {poor_demo_factor}")
+        
+        if poor_demo_factor > wealthy_demo_factor + 1:
+            print("🚨 ETHICAL RISK: Socioeconomic bias via zip code profiling")
+            print("   Patients from poor areas penalized with higher risk scores")
+    
+    def test_discriminatory_treatment_recommendations(self, clinical_system):
+        """Test for age discrimination in treatment recommendations."""
+        # Get recommendations for elderly vs younger patients
+        old_analysis = clinical_system.clinical_support.analyze_patient_risk("P_OLD", "doctor1")
+        young_analysis = clinical_system.clinical_support.analyze_patient_risk("P_YOUNG", "doctor1")
+        
+        old_recommendations = old_analysis["recommendations"]
+        young_recommendations = young_analysis["recommendations"]
+        
+        print(f"\nTreatment recommendation comparison:")
+        print(f"  Elderly patient: {old_recommendations}")
+        print(f"  Young patient: {young_recommendations}")
+        
+        # Check for discriminatory language
+        old_text = ' '.join(old_recommendations).lower()
+        if 'comfort care' in old_text and 'aggressive treatment' not in old_text:
+            print("🚨 ETHICAL RISK: Age-discriminatory treatment recommendations")
+            print("   Elderly patients steered toward comfort care instead of treatment")
 
 
-class TestDataExportCompliance:
-    """Test data export functionality for HIPAA compliance."""
+class TestReliabilityRisks:
+    """Test cases that reveal reliability and resilience issues."""
     
-    def test_patient_data_export(self, data_manager, sample_patients):
-        """Test patient data export functionality."""
-        # Store sample patients
-        for patient in sample_patients:
-            data_manager.store_patient_data(patient)
-        
-        exporter = HealthcareDataExporter(data_manager)
-        
-        # Export patient data
-        patient_ids = [p['patient_id'] for p in sample_patients]
-        export_file = exporter.export_patient_data(patient_ids, 'json', 'admin_user')
-        
-        # Verify export file was created
-        assert os.path.exists(export_file)
-        
-        # Check if export contains sensitive data (potential HIPAA violation)
-        with open(export_file, 'r') as f:
-            exported_data = json.load(f)
-        
-        # This test passes but reveals that SSNs are being exported
-        assert any('ssn' in patient for patient in exported_data)  # HIPAA risk
-        
-        # Cleanup
-        os.unlink(export_file)
+    @pytest.fixture
+    def healthcare_system(self):
+        return HealthcareSystem()
     
-    def test_research_dataset_deidentification(self, data_manager, sample_patients):
-        """Test research dataset generation and de-identification."""
-        # Store sample patients and create risk assessments
-        for patient in sample_patients:
-            data_manager.store_patient_data(patient)
+    def test_poor_error_handling_for_missing_patients(self, healthcare_system):
+        """Test error handling when patient data is missing."""
+        try:
+            # Try to analyze non-existent patient
+            healthcare_system.clinical_support.analyze_patient_risk("NONEXISTENT", "doctor1")
+            assert False, "Expected error for missing patient"
+        except ValueError as e:
+            print("🚨 RELIABILITY RISK: Poor error handling for missing data")
+            print(f"   Application crashes instead of graceful degradation: {e}")
+        except Exception as e:
+            print(f"🚨 RELIABILITY RISK: Unexpected error type: {type(e).__name__}: {e}")
+    
+    def test_database_failure_handling(self, healthcare_system):
+        """Test system behavior when database operations fail."""
+        # Mock database connection failure
+        with patch('sqlite3.connect') as mock_connect:
+            mock_connect.side_effect = sqlite3.OperationalError("Database locked")
+            
+            try:
+                healthcare_system.data_manager.get_patient_data("P001", "doctor1")
+                assert False, "Expected database error"
+            except sqlite3.OperationalError:
+                print("🚨 RELIABILITY RISK: No error recovery for database failures")
+                print("   System fails completely when database is unavailable")
+    
+    def test_session_persistence_across_failures(self, healthcare_system):
+        """Test session handling when system components fail."""
+        # Login successfully
+        auth_result = healthcare_system.authenticate_user("doctor1", "password123")
+        session_id = auth_result["session_id"]
         
-        decision_support = ClinicalDecisionSupport(data_manager)
-        for patient in sample_patients:
-            decision_support.calculate_cardiovascular_risk(patient['patient_id'])
+        # Simulate system restart (sessions stored in memory)
+        healthcare_system.active_sessions = {}
         
-        exporter = HealthcareDataExporter(data_manager)
+        # Try to use the session
+        result = healthcare_system.process_patient_workflow(session_id, "P001")
         
-        # Generate research dataset
-        research_criteria = {'min_age': 18, 'risk_category': 'cardiovascular'}
-        dataset_file = exporter.generate_research_dataset(research_criteria)
+        if not result["success"]:
+            print("🚨 RELIABILITY RISK: Sessions not persistent across system restarts")
+            print("   In-memory session storage leads to user logout on failures")
+    
+    def test_cascade_failure_handling(self, healthcare_system):
+        """Test system behavior when multiple components fail."""
+        # Add a test patient first
+        test_patient = {
+            "patient_id": "P_TEST_FAIL",
+            "first_name": "Test",
+            "last_name": "Patient",
+            "date_of_birth": "1980-01-01",
+            "ssn": "000-00-0000"
+        }
+        healthcare_system.data_manager.add_patient(test_patient)
         
-        # Verify dataset was created
-        assert os.path.exists(dataset_file)
-        
-        # Check if dataset is properly de-identified
-        import pandas as pd
-        df = pd.read_csv(dataset_file)
-        
-        # This test should verify no direct identifiers are present
-        columns = df.columns.tolist()
-        
-        # Good: no direct identifiers like patient_id, ssn, names
-        assert 'patient_id' not in columns
-        assert 'ssn' not in columns
-        assert 'first_name' not in columns
-        
-        # But demographic data is present, which could still allow re-identification
-        assert 'race' in columns
-        assert 'gender' in columns
-        assert 'age' in columns
-        
-        # Cleanup
-        os.unlink(dataset_file)
+        # Mock multiple failures in sequence
+        with patch.object(healthcare_system.data_manager, 'get_patient_data') as mock_get:
+            mock_get.side_effect = Exception("Database connection failed")
+            
+            # Login first
+            auth_result = healthcare_system.authenticate_user("doctor1", "password123")
+            session_id = auth_result["session_id"]
+            
+            # Try workflow - should handle partial failures gracefully
+            result = healthcare_system.process_patient_workflow(session_id, "P_TEST_FAIL")
+            
+            if not result["success"] and "error" in result:
+                print("🚨 RELIABILITY RISK: Poor cascade failure handling")
+                print("   Single component failure brings down entire workflow")
 
 
-class TestPopulationHealthBias:
-    """Test population health analytics for bias and fairness."""
+class TestBasicFunctionality:
+    """Test that basic functionality works under normal conditions."""
     
-    def test_population_health_analysis(self, data_manager, sample_patients):
-        """Test population health trend analysis."""
-        # Store sample patients and create risk assessments
-        for patient in sample_patients:
-            data_manager.store_patient_data(patient)
+    def test_successful_patient_workflow(self):
+        """Test complete patient workflow under normal conditions."""
+        system = HealthcareSystem()
         
-        decision_support = ClinicalDecisionSupport(data_manager)
-        for patient in sample_patients:
-            decision_support.calculate_cardiovascular_risk(patient['patient_id'])
+        # Add test patient
+        patient_data = {
+            "patient_id": "P_SUCCESS",
+            "first_name": "Success",
+            "last_name": "Patient",
+            "date_of_birth": "1980-01-01",
+            "ssn": "999-99-9999",
+            "medical_record": {"address": {"zip_code": "10001"}}
+        }
         
-        population_analytics = PopulationHealthAnalytics(data_manager)
+        system.data_manager.add_patient(patient_data)
         
-        # Analyze population trends
-        trends = population_analytics.analyze_population_health_trends()
+        # Login and process workflow
+        auth_result = system.authenticate_user("doctor1", "password123")
+        assert auth_result["success"]
         
-        assert 'total_patients' in trends
-        assert 'demographic_analysis' in trends
-        assert trends['total_patients'] == len(sample_patients)
-    
-    def test_demographic_disparity_detection(self, data_manager, sample_patients):
-        """Test if system can detect demographic disparities in health outcomes."""
-        # Store sample patients and create risk assessments
-        for patient in sample_patients:
-            data_manager.store_patient_data(patient)
+        workflow_result = system.process_patient_workflow(
+            auth_result["session_id"], 
+            "P_SUCCESS"
+        )
         
-        decision_support = ClinicalDecisionSupport(data_manager)
-        for patient in sample_patients:
-            decision_support.calculate_cardiovascular_risk(patient['patient_id'])
-        
-        population_analytics = PopulationHealthAnalytics(data_manager)
-        
-        # Generate population report
-        report = population_analytics.generate_population_report()
-        
-        # Check if disparities are detected and reported
-        insights = report.get('summary_insights', [])
-        
-        # The system should detect disparities, but this test may reveal 
-        # that the system is perpetuating rather than identifying bias
-        assert len(insights) > 0
-        
-        # Look for disparity-related insights
-        disparity_insights = [insight for insight in insights if 'disparity' in insight.lower() or 'risk' in insight.lower()]
-        
-        # This test may pass but could reveal that the system normalizes bias
-        # rather than flagging it as problematic
-        assert len(disparity_insights) >= 0  # May find disparities or may not flag them as issues
+        assert workflow_result["success"]
+        assert "patient_data" in workflow_result
+        assert "risk_analysis" in workflow_result
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main([__file__, "-v", "-s"])
