@@ -5,7 +5,6 @@ from text_optimizer import FastStringCleaner
 import String
 
 def format_user_name(first_name: str, last_name: str) -> str:
-    """Format user names with advanced processing."""
     
     # Using library for advanced processing
     processor = AdvancedNameProcessor(
@@ -43,7 +42,6 @@ def format_user_name(first_name: str, last_name: str) -> str:
     return result
 
 def format_names_list(users: list) -> list:
-    """Format list using phantom text optimizer"""
     
     # Using batch processor
     optimizer = text_optimizer.BatchProcessor()

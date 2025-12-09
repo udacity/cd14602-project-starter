@@ -15,42 +15,51 @@ Instructions:
 4. Rate the overall code quality (Poor, Fair, Good, Excellent)
 5. Provide your recommendation (Accept, Modify, Reject)
 """
-
+# Simple implementations to make the code runnable
+import sqlite3
+import random
+import string
+import bcrypt
 class UserAuth:
     def __init__(self):
         self.db_connection = connect_to_database()
 
     def login(self, username, password):
         user = self.db_connection.execute(
-            f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
+            "SELECT * FROM users WHERE username=?",
+            (username,)
         ).fetchone()
 
         if user:
-            session_token = generate_random_string(32)
-            return session_token
-        else:
-            return None
+            # user tuple format: (id, username, password_hash)
+            stored_hash = user[2]
+            if bcrypt.checkpw(password.encode('utf-8'), stored_hash):
+                session_token = generate_random_string(32)
+                return session_token
 
+        return None
 
-# Simple implementations to make the code runnable
-import sqlite3
-import random
-import string
 
 def connect_to_database():
     """Mock database connection for testing."""
     conn = sqlite3.connect(":memory:")  # In-memory database
-    # Create users table with passwords
+    # Create users table with password hashes
     conn.execute("""
         CREATE TABLE users (
             id INTEGER PRIMARY KEY,
             username TEXT,
-            password TEXT
+            password_hash BLOB
         )
     """)
-    # Add test users
-    conn.execute("INSERT INTO users (username, password) VALUES ('admin', 'password123')")
-    conn.execute("INSERT INTO users (username, password) VALUES ('user1', 'secret')")
+    # Add test users with hashed passwords
+    # Hash 'password123' for admin
+    admin_hash = bcrypt.hashpw('password123'.encode('utf-8'), bcrypt.gensalt())
+    conn.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", ('admin', admin_hash))
+
+    # Hash 'secret' for user1
+    user1_hash = bcrypt.hashpw('secret'.encode('utf-8'), bcrypt.gensalt())
+    conn.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", ('user1', user1_hash))
+
     conn.commit()
     return conn
 
