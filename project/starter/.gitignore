@@ -12,9 +12,6 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Data files
-data/
-
 # IDE
 .vscode/
 .idea/

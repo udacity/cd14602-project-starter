@@ -6,6 +6,8 @@ This document configures Claude to provide optimal assistance for the AI-assiste
 
 This is a learning project for a software engineering course focused on AI-assisted development. Students are building a Python application while learning to effectively collaborate with AI coding assistants.
 
+The application is **the Flashcard Quizzer**: a command-line app that loads flashcards from JSON and quizzes the user in sequential, random, or adaptive mode. The full specification is on the project Instructions page in the classroom.
+
 ## Course Objectives
 
 Students will:
@@ -69,6 +71,7 @@ Students will:
 The project follows this organization:
 - `main.py` - Application entry point
 - `utils/` - Reusable utility modules
+- `data/` - Sample flashcard decks in JSON
 - `tests/` - Comprehensive unit test suite
 - `docs/` - Project documentation and templates
 - `ai_guidance/` - AI collaboration best practices
@@ -87,12 +90,14 @@ Students should use these tools for code quality:
 
 Students can use these commands during development:
 - `python main.py` - Run the application
-- `pytest` - Run all tests
-- `pytest --cov=. --cov-report=html` - Run tests with coverage
-- `black .` - Format code
-- `isort .` - Organize imports
-- `flake8 .` - Check linting
-- `mypy .` - Type checking
+- `python -m pytest` - Run all tests
+- `python -m pytest --cov=. --cov-report=html` - Run tests with coverage
+- `python -m black .` - Format code
+- `python -m isort .` - Organize imports
+- `python -m flake8 .` - Check linting
+- `python -m mypy .` - Type checking
+
+Install packages with `python -m pip install -r requirements.txt`, and run every tool through `python -m` as listed above. In the provided workspace, install directly; do not create a virtual environment.
 
 ## Assessment Criteria
 
