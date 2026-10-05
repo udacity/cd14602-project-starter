@@ -24,34 +24,34 @@ For each AI interaction, create a new entry with the following structure:
 
 ## Example Entry
 
-### 2024-01-15 - Initial Task Manager Implementation
+> This entry shows the expected level of detail. It does **not** count toward your five required entries. Delete it before you submit.
 
-**Context:** I needed to create a basic task management system to demonstrate CRUD operations and serve as the foundation for the project.
+### 2024-01-15 - Flashcard Loader Validation
 
-**AI Tool Used:** Claude
+**Context:** I needed a module that loads flashcards from a JSON file and rejects bad data with a clear message instead of a traceback.
 
-**Prompt/Request:** "Help me create a Python class for managing tasks with basic CRUD operations. The class should handle task creation, retrieval, completion, and deletion. Include proper error handling and type hints."
+**AI Tool Used:** Claude Code
 
-**AI Response:** Claude generated a TaskManager class with methods for add_task, get_task, get_all_tasks, complete_task, delete_task, and to_dict. The code included type hints, proper error handling with ValueError for missing tasks, and used datetime for timestamps.
+**Prompt/Request:** "Create `data_loader.py` with a function that loads flashcards from a JSON file. Support both a plain list of `{"front", "back"}` objects and a `{"cards": [...]}` wrapper. Raise a custom exception with a helpful message if the file is missing, the JSON is malformed, or a card has no `back`. Use type hints."
+
+**AI Response:** Claude generated a `load_flashcards()` function and a `FlashcardLoadError` exception. It handled both JSON formats and a missing file, but it caught every exception with a bare `except:` and only checked for `front`.
 
 **Changes Made:** 
-- Added priority field to tasks with a default value of "medium"
-- Modified the task structure to include created_at timestamp
-- Added validation for priority values
-- Renamed some variable names for clarity
+- Replaced the bare `except:` with specific `FileNotFoundError` and `json.JSONDecodeError` handlers
+- Added validation that every card has non-empty `front` and `back` strings
+- Added the card's position to the error message so the user can find the bad entry
 
 **Reasoning:** 
-- Priority field will be useful for implementing sorting features later
-- Timestamps help with task organization and analytics
-- Input validation prevents invalid data from being stored
-- Better variable names improve code readability
+- A bare `except:` hides real bugs, including `KeyboardInterrupt`
+- A card without a `back` would break the quiz loop later, far from the cause
+- A message that names the bad card is far easier to act on
 
-**Outcome:** Successfully created a robust TaskManager class that serves as the core of the application with room for future enhancements.
+**Outcome:** The loader now rejects bad decks with one readable line, and `test_load_missing_required_field` passes.
 
 **Lessons Learned:** 
-- AI provides good starting implementations but always needs customization
-- It's important to think about future requirements when reviewing AI code
-- Type hints and error handling are crucial for maintainable code
+- AI covered the happy path well but under-specified the error handling
+- Naming the exact failure cases in the prompt produced better code than asking for "error handling"
+- Each requirement in the prompt should map to a test
 
 ---
 

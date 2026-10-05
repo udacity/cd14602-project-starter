@@ -1,5 +1,7 @@
 # Design Patterns Guide
 
+> **Note:** The examples below use a simple task list to illustrate each pattern. In the Flashcard Quizzer you apply the same ideas to your own domain. For example, use the Strategy pattern for the quiz modes (`SequentialMode`, `RandomMode`, `AdaptiveMode`) and a Factory to pick the mode from the `--mode` flag.
+
 This guide provides examples of common design patterns that you can implement in your AI-assisted development project. Use these patterns to improve code organization, maintainability, and demonstrate software engineering best practices.
 
 ## 1. Strategy Pattern
