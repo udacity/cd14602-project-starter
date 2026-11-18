@@ -1,171 +1,156 @@
 # AI Edit Log
 
-**Instructions:** Use this document to track all your interactions with AI assistants during the project. This log will help you reflect on your AI collaboration process and demonstrate your learning journey.
+**AI tool:** Copilot SDK in VS Code  
+**Project:** Flashcard Quizzer  
+**Date:** 2026-11-18
 
-## How to Use This Log
+This log records five scoped implementation requests extracted from the project
+brief that guided this AI-assisted build. They represent the work instructions
+used to implement and review the application, not five separate user chat
+messages. The responses, decisions, and verification notes below describe the
+actual project changes.
 
-For each AI interaction, create a new entry with the following structure:
+## 1. Load and validate both JSON deck formats
 
-### Entry Template
-```
-## [Date] - [Brief Description]
+**Context:** The starter includes a top-level array deck and an object containing
+a `cards` array. The application must report malformed or invalid input without
+exposing a traceback.
 
-**Context:** What were you trying to accomplish?
-**AI Tool Used:** Claude/ChatGPT/Copilot/etc.
-**Prompt/Request:** What exactly did you ask the AI?
-**AI Response:** Summary of what the AI generated (don't copy entire code blocks)
-**Changes Made:** What modifications did you make to the AI's suggestions?
-**Reasoning:** Why did you make those changes?
-**Outcome:** What was the final result?
-**Lessons Learned:** What did you learn from this interaction?
-```
+**Prompt/Request:** “Implement the data layer for both supplied JSON formats.
+Validate that every card is an object with non-empty string `front` and `back`
+values. Report a useful file or card-position error for missing files, bad JSON,
+unsupported structures, and invalid fields. Keep file reading separate from
+deck validation and use type hints.”
 
----
+**AI response:** Added the `Flashcard` model, `utils/file_handler.py` for UTF-8
+JSON reading, and `data_loader.py` for validating either deck shape.
 
-## Example Entry
+**Review/refinement:** Kept file-system/JSON failures in a dedicated exception
+and translated those into `FlashcardLoadError` at the deck boundary. Added
+card-index context and rejected empty decks and whitespace-only values. The CLI
+prints loader errors to stderr and exits with a nonzero status.
 
-> This entry shows the expected level of detail. It does **not** count toward your five required entries. Delete it before you submit.
+**Reasoning:** Precise error handling keeps invalid-data failures understandable
+and avoids masking unrelated programming errors with broad exception handlers.
 
-### 2024-01-15 - Flashcard Loader Validation
+**Outcome:** Tests cover both valid shapes, malformed JSON, missing files,
+missing fields, and malformed card structures.
 
-**Context:** I needed a module that loads flashcards from a JSON file and rejects bad data with a clear message instead of a traceback.
+**Lesson:** Validate data at ingestion so the quiz engine can rely on a
+well-formed domain model.
 
-**AI Tool Used:** Claude Code
+## 2. Implement strategy-based quiz modes and a factory
 
-**Prompt/Request:** "Create `data_loader.py` with a function that loads flashcards from a JSON file. Support both a plain list of `{"front", "back"}` objects and a `{"cards": [...]}` wrapper. Raise a custom exception with a helpful message if the file is missing, the JSON is malformed, or a card has no `back`. Use type hints."
+**Context:** The three modes select questions differently and should be
+extendable without putting mode-specific branches into the CLI loop.
 
-**AI Response:** Claude generated a `load_flashcards()` function and a `FlashcardLoadError` exception. It handled both JSON formats and a missing file, but it caught every exception with a bare `except:` and only checked for `front`.
+**Prompt/Request:** “Create a `QuizMode` abstraction with sequential, random,
+and adaptive implementations. Add a factory that maps user-facing mode names to
+the corresponding strategy and rejects unknown names.”
 
-**Changes Made:** 
-- Replaced the bare `except:` with specific `FileNotFoundError` and `json.JSONDecodeError` handlers
-- Added validation that every card has non-empty `front` and `back` strings
-- Added the card's position to the error message so the user can find the bad entry
+**AI response:** Added `QuizMode`, `SequentialMode`, `RandomMode`,
+`AdaptiveMode`, and `QuizModeFactory` in `quiz_engine.py`.
 
-**Reasoning:** 
-- A bare `except:` hides real bugs, including `KeyboardInterrupt`
-- A card without a `back` would break the quiz loop later, far from the cause
-- A message that names the bad card is far easier to act on
+**Review/refinement:** The factory is a single responsibility separate from
+argument parsing. Random mode accepts an injectable random generator for
+repeatable tests. Adaptive mode asks the complete deck once and schedules each
+missed card for one retry afterward.
 
-**Outcome:** The loader now rejects bad decks with one readable line, and `test_load_missing_required_field` passes.
+**Reasoning:** The strategy API shares the same `start`, `next_card`, and
+`record_answer` contract. A bounded retry is adaptive while still guaranteeing
+that a session with unanswered or repeatedly missed cards terminates.
 
-**Lessons Learned:** 
-- AI covered the happy path well but under-specified the error handling
-- Naming the exact failure cases in the prompt produced better code than asking for "error handling"
-- Each requirement in the prompt should map to a test
+**Outcome:** Factory/type tests cover all modes; a focused adaptive test verifies
+first-pass order, retry behavior, and termination.
 
----
+**Lesson:** An explicit lifecycle makes each strategy testable without knowing
+the internals of the user interface.
 
-## Your Log Entries
+## 3. Track answers, accuracy, and missed terms
 
-### [Date] - [Brief Description]
+**Context:** Each answer needs immediate comparison and the final summary must
+report total questions, accuracy, and terms missed.
 
-**Context:** 
+**Prompt/Request:** “Add session-level answer checking and statistics. Ignore
+case and surrounding whitespace, count all answered questions, report
+correct-answer percentage, and list missed terms once even if they are missed
+again.”
 
-**AI Tool Used:** 
+**AI response:** Added `QuizSession` and `QuizStats` to the quiz engine.
 
-**Prompt/Request:** 
+**Review/refinement:** Accuracy is zero for a session with no submitted
+answers; adaptive retries count as additional questions. A term appears only
+once in the missed list, even if it is missed on its retry.
 
-**AI Response:** 
+**Reasoning:** Counting asked-and-answered questions makes the adaptive score
+transparent, and unique terms make the summary readable.
 
-**Changes Made:** 
+**Outcome:** Unit tests cover case-insensitive answers, whitespace trimming,
+incorrect answers, unique missed terms, and accuracy calculation.
 
-**Reasoning:** 
+**Lesson:** Statistics need an explicit denominator and retry policy; without
+those definitions, the same session can produce ambiguous accuracy values.
 
-**Outcome:** 
+## 4. Build a robust terminal interaction and CLI
 
-**Lessons Learned:** 
+**Context:** The application needs mode and file flags, immediate feedback,
+colors, an early-exit path, and a graceful Ctrl+C response.
 
----
+**Prompt/Request:** “Implement a small argparse CLI and terminal interface.
+Support `-f`/`--file`, `-m`/`--mode`, and `--stats`; display correct/incorrect
+feedback and the final summary. Handle `exit`, EOF, and Ctrl+C without a
+traceback.”
 
-### [Date] - [Brief Description]
+**AI response:** Added argument parsing in `main.py` and interaction/reporting
+in `ui.py`. `--stats` enables running accuracy output while the final summary is
+always shown.
 
-**Context:** 
+**Review/refinement:** Error messages from deck loading are caught only at the
+CLI boundary. The interface accepts injectable input/output callables so tests
+can simulate a real session without terminal interaction. ANSI colors are
+added only when standard output is a TTY.
 
-**AI Tool Used:** 
+**Reasoning:** Narrow exception handling preserves meaningful failures, while
+dependency injection makes integration tests deterministic.
 
-**Prompt/Request:** 
+**Outcome:** Integration tests exercise completed sessions, early exit,
+interrupt handling, flags, live stats, and friendly missing-file output.
 
-**AI Response:** 
+**Lesson:** Test seams such as injectable I/O are useful when they keep the
+production interaction simple and make behavior observable.
 
-**Changes Made:** 
+## 5. Verify behavior and project quality
 
-**Reasoning:** 
+**Context:** The deliverable requires a passing pytest suite, over 80% coverage,
+Black formatting, Flake8 cleanliness, and mypy checks.
 
-**Outcome:** 
+**Prompt/Request:** “Review the source and tests against the stated requirements.
+Run pytest with coverage, Black, Flake8, and mypy. Fix issues caused by the
+implementation, and record only measured results.”
 
-**Lessons Learned:** 
+**AI response:** Added focused tests for loading, strategies, statistics, and
+CLI integration, then ran the specified quality tools and refined any reported
+issues.
 
----
+**Review/refinement:** The first integration run exposed an overly strict
+question-output assertion and an input function bound too early for CLI
+simulation. The assertion was made insensitive to the display newline, and the
+UI now resolves `input` at call time when no test input function is supplied.
+After that refinement, all quality checks passed.
 
-## Tips for Effective AI Collaboration
+**Reasoning:** The quality gate measures distinct concerns: runtime behavior,
+formatting, lint, type safety, and the specified coverage threshold.
 
-### 1. Be Specific in Your Requests
-- ❌ "Write a function"
-- ✅ "Write a function that validates email addresses using regex, returns a boolean, and includes proper error handling"
+**Outcome:** The final suite passed 25 tests. Coverage was 99% overall and
+approximately 98% across application modules. Black, Flake8, and mypy all
+completed successfully; exact commands and results are in `quality_report.md`.
 
-### 2. Provide Context
-- Include relevant code snippets
-- Explain the larger goal
-- Mention any constraints or requirements
+**Lesson:** A successful test suite is necessary but does not replace checking
+formatting, typing, lint, or the coverage target independently.
 
-### 3. Review and Understand
-- Never copy AI code without understanding it
-- Ask for explanations of complex logic
-- Test the code before accepting it
+## Summary
 
-### 4. Iterate and Refine
-- Use follow-up questions to improve the code
-- Ask for alternative implementations
-- Request code reviews and suggestions
-
-### 5. Document Your Process
-- Keep detailed notes in this log
-- Explain your decision-making process
-- Track what works and what doesn't
-
-## Common AI Collaboration Patterns
-
-### Code Generation
-- Initial implementation of classes/functions
-- Boilerplate code creation
-- Test case generation
-
-### Code Review
-- Ask AI to review your code for issues
-- Request suggestions for improvements
-- Get feedback on code structure
-
-### Problem Solving
-- Debugging help
-- Algorithm suggestions
-- Architecture advice
-
-### Learning and Explanation
-- Ask for explanations of complex concepts
-- Request examples of design patterns
-- Get guidance on best practices
-
-## Reflection Questions
-
-As you work through the project, consider these questions:
-
-1. **What types of tasks did AI help with most effectively?**
-2. **Where did you need to make the most modifications to AI suggestions?**
-3. **What patterns did you notice in AI strengths and weaknesses?**
-4. **How did your prompting technique improve over time?**
-5. **What would you do differently in future AI collaborations?**
-
-## Summary Statistics
-
-At the end of your project, fill out these statistics:
-
-- **Total AI interactions:** ___
-- **Lines of AI-generated code used:** ___
-- **Lines of AI-generated code modified:** ___
-- **Most helpful AI interaction:** ___
-- **Most challenging AI interaction:** ___
-- **Biggest lesson learned:** ___
-
----
-
-**Note:** This log is a required component of your final project report. Be thorough and honest in your documentation to demonstrate your learning process and AI collaboration skills.
+- **Scoped implementation requests recorded:** 5
+- **AI-generated components:** loader, model, strategy/factory/session, CLI,
+  terminal UI, tests, and project documentation
+- **Verification:** See `final_report.md` for measured test and quality results.

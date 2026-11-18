@@ -1,79 +1,90 @@
-# Flashcard Quizzer: Project Starter
+# Flashcard Quizzer
 
-This is the starter for **The Flashcard Quizzer**, a command-line application that loads flashcards from a JSON file and quizzes you in sequential, random, or adaptive mode. You won't write the application by hand. You'll direct an AI coding agent to build it, review what it produces, and refine it until it meets the specification.
+A lightweight terminal application for practicing JSON flashcard decks. It
+supports sequential, shuffled, and adaptive sessions, reports accuracy and
+missed terms, and validates decks before the quiz begins.
 
-The full specification (functional requirements, design patterns, required tests, and Definition of Done) is on the project's **Instructions** page in the classroom. This README explains what the starter gives you and how to get going.
+## Requirements and installation
 
-## What's in the starter
+Python 3.10 or later is recommended. From this directory, create and activate a
+virtual environment, then install the project tools:
 
-```
-starter/
-├── main.py                 # Empty. Your entry point.
-├── data/                   # Sample flashcard decks
-│   ├── glossary.json       # Array format: [{"front": ..., "back": ...}]
-│   └── python_basics.json  # Object format: {"cards": [...]}
-├── utils/                  # Your helper modules go here
-├── tests/                  # Empty. Your pytest suite goes here
-├── docs/
-│   ├── ai_edit_log.md      # AI interaction log (required, 5+ entries)
-│   ├── report_template.md  # Final report template (required, 1,000-1,500 words)
-│   └── design_patterns.md  # Pattern reference
-├── ai_guidance/            # Prompting and code review guides
-├── .claude/                # Claude Code configuration and slash commands
-└── requirements.txt        # Quality tools: pytest, black, flake8, mypy, ...
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 ```
 
-`main.py`, `utils/` and `tests/` are deliberately empty. Building them is the project. Keep the folder structure: your agent uses it to separate concerns.
+On macOS or Linux, activate with `source .venv/bin/activate`.
 
-The two sample decks use the two JSON formats your loader must support. You can add your own decks to `data/`.
+## Run a quiz
 
-## Getting started
-
-1. **Install the quality tools.**
-
-   In the provided workspace:
-   ```bash
-   cd /voc/work/project/starter
-   python -m pip install -r requirements.txt
-   ```
-
-   On your own computer, create and activate a virtual environment first, then install:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   python -m pip install -r requirements.txt
-   ```
-
-2. **Start your AI agent** from this folder (for example, `claude`) and work through the milestones on the Instructions page.
-
-## When you're done
-
-These commands should work (the flags are part of the specification):
-
-```bash
+```powershell
 python main.py --help
 python main.py --mode sequential --file data/glossary.json
+python main.py -m random -f data/glossary.json
 python main.py -m adaptive -f data/python_basics.json
 ```
 
-And these checks should pass:
+`-f`/`--file` selects the required JSON deck. `-m`/`--mode` accepts
+`sequential`, `random`, or `adaptive` and defaults to sequential. `--stats`
+prints running accuracy after each answer; a final summary is always shown.
+Type `exit` or press Ctrl+C to finish early. Answers are compared
+case-insensitively, with surrounding whitespace ignored. Correct/incorrect
+feedback is green/red in interactive terminals.
 
-```bash
-python -m pytest --cov=. --cov-report=html   # target: >80% coverage
+Adaptive mode asks every card once, then retries each missed card once after
+the first pass. This prioritizes known misses without allowing an unbounded
+loop. The final accuracy counts every answered question, including retries,
+and the missed-terms list includes each card front missed at least once.
+
+## Deck format
+
+Both supported JSON shapes contain objects with non-empty string `front` and
+`back` fields:
+
+```json
+[
+  {"front": "API", "back": "Application Programming Interface"}
+]
+```
+
+```json
+{
+  "cards": [
+    {"front": "API", "back": "Application Programming Interface"}
+  ]
+}
+```
+
+Malformed JSON, unsupported shapes, missing fields, and unreadable/missing files
+produce a concise error instead of a traceback.
+
+## Project structure
+
+- `main.py`: argparse entry point and friendly loader-error handling
+- `data_loader.py`, `flashcard.py`: deck validation and domain model
+- `utils/file_handler.py`: UTF-8 JSON file reading and file errors
+- `quiz_engine.py`: quiz strategies, factory, session, and statistics
+- `ui.py`: terminal interaction, feedback, and summaries
+- `tests/`: loader, strategy, integration, and CLI tests
+- `data/`: sample decks in both supported formats
+- `docs/`: AI interaction log, report, and design-pattern reference
+
+## Quality checks
+
+```powershell
+python -m pytest --cov=. --cov-report=term-missing
+python -m pytest --cov=. --cov-report=html
 python -m black --check .
 python -m flake8 .
 python -m mypy .
 ```
 
-## What to submit
+The test suite targets more than 80% coverage. The HTML coverage report is
+written to `htmlcov/index.html`.
 
-Check the Instructions page and the rubric for the full list. In short:
-
-- Your complete source code, the `tests/` suite, and the `data/` decks
-- `docs/ai_edit_log.md` with at least 5 detailed AI interactions
-- The final report, written from `docs/report_template.md` (1,000-1,500 words)
-- This README, rewritten to describe **your** application: features, setup, and usage examples
-
-## License
-
-[License](../../LICENSE.txt)
+Measured results for this submission are recorded in
+[`docs/quality_report.md`](docs/quality_report.md). The final project report and
+the five scoped AI interaction examples are in `docs/final_report.md` and
+`docs/ai_edit_log.md`.
