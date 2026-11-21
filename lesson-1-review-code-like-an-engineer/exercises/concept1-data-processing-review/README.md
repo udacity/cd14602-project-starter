@@ -21,7 +21,7 @@ pytest test_data_processor.py -v
 
 **Expected Output:**
 - Basic functionality tests pass
-- Error handling tests FAIL (demonstrating missing error handling!)
+- Error handling tests pass too: each one uses `pytest.raises` to confirm the crash (demonstrating missing error handling!)
 - Shows magic numbers and poor naming issues
 
 ### Step 2: Review the Code

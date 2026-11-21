@@ -41,10 +41,10 @@ class TestDataProcessorBasic:
 
 
 class TestDataProcessorErrorHandling:
-    """Tests that should pass but will fail - showing missing error handling."""
+    """Tests that pass by confirming the crash - showing missing error handling."""
     
     def test_missing_required_fields_handled_gracefully(self):
-        """This test fails - shows missing error handling."""
+        """Passes by confirming the crash - shows missing error handling."""
         problematic_data = [
             {'id': 1, 'status': 'active', 'value': 50},  # Good item
             {'id': 5, 'status': 'active'},               # Missing 'value' - will crash
@@ -59,13 +59,13 @@ class TestDataProcessorErrorHandling:
             # assert result[0]['id'] == 1
     
     def test_invalid_input_type_raises_clear_error(self):
-        """This test fails - shows missing input validation."""
+        """Passes by confirming the crash - shows missing input validation."""
         # Should validate input type, but it doesn't
         with pytest.raises(TypeError):
             process_data("not a list")  # Will crash with unhelpful error
     
     def test_none_input_raises_clear_error(self):
-        """This test fails - shows missing input validation."""
+        """Passes by confirming the crash - shows missing input validation."""
         # Should handle None gracefully, but it doesn't
         with pytest.raises(TypeError):
             process_data(None)  # Will crash
@@ -103,7 +103,7 @@ class TestDataProcessorConstants:
 
 
 class TestDataProcessorRobustness:
-    """Tests for edge cases - some will work, others will fail."""
+    """Tests for edge cases - the last one passes by confirming the crash."""
     
     def test_zero_value_handled(self):
         """Zero values should work fine."""
@@ -122,7 +122,7 @@ class TestDataProcessorRobustness:
         assert result[0]['processed_value'] == -12.0  # -10 * 1.2
     
     def test_mixed_valid_and_invalid_data(self):
-        """This test fails - shows how bad data crashes everything."""
+        """Passes by confirming the crash - shows how bad data crashes everything."""
         mixed_data = [
             {'id': 1, 'status': 'active', 'value': 50},     # Valid
             {'id': 2, 'status': 'active'},                  # Missing value - will crash
