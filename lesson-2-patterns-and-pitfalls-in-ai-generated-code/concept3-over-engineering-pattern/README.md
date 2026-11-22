@@ -17,7 +17,10 @@ Review code that demonstrates the Over-Engineering pattern - when AI applies com
 
 ## Instructions
 
-### Step 1: Run Tests to See the Pattern
+### Step 1: Read the Original Code First
+1. **Examine the original simple code** in `starter/original_discount_calculator.py`
+
+### Step 2: Run Tests to See the Pattern
 ```bash
 cd concept3-over-engineering-pattern/starter
 python -m pytest test_discount_calculator.py -v
@@ -29,18 +32,18 @@ python -m pytest test_discount_calculator.py -v
 - **Complexity analysis tests**: Pass (revealing over-engineering metrics)
 - **Comparison tests**: Show identical functionality with vastly different complexity
 
-### Step 2: Review the Code
-1. **First, examine the original simple code** in `starter/original_discount_calculator.py`
-2. **Then, review the AI-"improved" version** in `starter/discount_calculator.py`  
-3. **Compare the two versions** and apply the over-engineering assessment:
+### Step 3: Review the Code
+1. **Review the AI-"improved" version** in `starter/discount_calculator.py`  
+2. **Compare the two versions** and apply the over-engineering assessment:
    - How many lines/classes did AI add for a simple "add logging" request?
    - Is this complexity justified for the problem size?
    - How many design patterns are being used unnecessarily?
-4. **Document** your findings using the template below
+3. **Document** your findings using the template below
 
-### Step 3: Run the Solution Tests
+### Step 4: Run the Solution Tests
+In the Udacity workspace, the solution is in this lesson's `exercises` folder:
 ```bash
-cd ../solution
+cd ../../exercises/concept3-over-engineering-pattern/solution
 python -m pytest test_discount_calculator.py -v
 ```
 
@@ -49,7 +52,7 @@ python -m pytest test_discount_calculator.py -v
 - Tests pass with equivalent behavior
 - Notice how simple code can be just as effective
 
-### Step 4: Compare and Learn
+### Step 5: Compare and Learn
 4. **Compare** the complex vs. simple implementations for equivalent functionality
 
 ## Review Template

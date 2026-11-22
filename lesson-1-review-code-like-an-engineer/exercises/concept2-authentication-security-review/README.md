@@ -13,7 +13,11 @@ Review an authentication system for security and structural issues. Apply system
 
 ## Instructions
 
-### Step 1: Run Tests to See the Issues
+### Step 1: Read the Code Before Running Tests
+1. **Open** `starter/user_auth.py` and read the `UserAuth` class and its `login()` method
+2. **Note** how the password is checked and how the database query is built
+
+### Step 2: Run Tests to See the Issues
 ```bash
 cd concept2-authentication-security-review/starter
 pytest test_security_vulnerabilities.py -v
@@ -24,7 +28,7 @@ pytest test_security_vulnerabilities.py -v
 - Security tests reveal potential issues
 - Tests demonstrate various authentication patterns
 
-### Step 2: Security Review
+### Step 3: Security Review
 1. **Open** `starter/user_auth.py` and examine the security flaws
 2. **Focus on security issues** - this is a security-critical component
 3. **Apply** the engineering framework with extra attention to:
@@ -33,7 +37,8 @@ pytest test_security_vulnerabilities.py -v
    - Input validation (none!)
    - Error handling
 
-### Step 3: Run Security Tests on Secure Solution
+### Step 4: Run Security Tests on Secure Solution
+In the Udacity workspace, the `solution` folder sits next to `starter`:
 ```bash
 cd ../solution
 pytest test_secure_authentication.py -v
@@ -45,7 +50,7 @@ pytest test_secure_authentication.py -v
 - Passwords are stored as hashes
 - Input validation works correctly
 
-### Step 4: Document Security Issues
+### Step 5: Document Security Issues
 4. **Document** all security vulnerabilities found
 5. **Compare** with the secure implementation
 

@@ -20,7 +20,11 @@ This exercise specifically targets patterns commonly found in AI-generated code.
 
 ## Instructions
 
-### Step 1: Run Phantom Library Detection Tests
+### Step 1: Read the Imports Before Running Tests
+1. **Open** `starter/file_processor.py` and read the import statements at the top
+2. **Note** which libraries you recognize and which sound unfamiliar
+
+### Step 2: Run Phantom Library Detection Tests
 ```bash
 cd concept3-dependency-validation-review/starter
 pytest test_phantom_libraries.py -v -s
@@ -31,7 +35,7 @@ pytest test_phantom_libraries.py -v -s
 - Dependency validation tests demonstrate verification methods
 - Tests show patterns for validating external libraries
 
-### Step 2: Review the Code
+### Step 3: Review the Code
 1. **Open** `starter/file_processor.py` and examine the imports
 2. **Apply** the engineering code review framework:
    - Structure & Organization
@@ -40,7 +44,7 @@ pytest test_phantom_libraries.py -v -s
    - Dependency Validation
 3. **Research any unfamiliar libraries** - verify they exist and are maintained
 
-### Step 3: AI Pattern Detection
+### Step 4: AI Pattern Detection
 4. **Apply** the standard review framework PLUS AI-specific checks:
    - Library names that sound "too good to be true"
    - Generic, appealing names like "advanced" and "pro"
@@ -49,7 +53,8 @@ pytest test_phantom_libraries.py -v -s
    - Using `print()` instead of logging
    - Generic exception handling
 
-### Step 4: Run Real Dependencies Tests
+### Step 5: Run Real Dependencies Tests
+In the Udacity workspace, the `solution` folder sits next to `starter`:
 ```bash
 cd ../solution
 pytest test_real_dependencies.py -v
@@ -60,7 +65,7 @@ pytest test_real_dependencies.py -v
 - Proper error handling demonstrated
 - No phantom dependencies detected
 
-### Step 5: Compare and Learn
+### Step 6: Compare and Learn
 6. **Compare** the fixed version that uses real, verified libraries
 
 ## Review Template

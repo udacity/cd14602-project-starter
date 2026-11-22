@@ -13,7 +13,11 @@ Review database operations code that demonstrates basic SQL injection vulnerabil
 
 ## Instructions
 
-### Step 1: Run Tests to See the Issues
+### Step 1: Read the Code Before Running Tests
+1. **Open** `starter/database_manager.py` and read the database functions
+2. **Note** how each SQL query is built, and where user input goes into it
+
+### Step 2: Run Tests to See the Issues
 ```bash
 cd concept5-database-operations-review/starter
 python -m pytest test_database_security.py -v
@@ -24,7 +28,7 @@ python -m pytest test_database_security.py -v
 - Security tests pass too (for example, the `' OR '1'='1` email lookup returns a user)
 - Shows database security vulnerabilities
 
-### Step 2: Review the Code
+### Step 3: Review the Code
 1. **Open** `starter/database_manager.py` and review the functions
 2. **Apply** the engineering code review framework:
    - Structure & Organization
@@ -33,7 +37,8 @@ python -m pytest test_database_security.py -v
    - Security Issues
 3. **Document** your findings using the template below
 
-### Step 3: Run the Solution Tests
+### Step 4: Run the Solution Tests
+In the Udacity workspace, the `solution` folder sits next to `starter`:
 ```bash
 cd ../solution
 python -m pytest test_secure_database.py -v
@@ -44,7 +49,7 @@ python -m pytest test_secure_database.py -v
 - SQL injection is now blocked
 - Notice improved parameterized queries
 
-### Step 4: Compare and Learn
+### Step 5: Compare and Learn
 4. **Compare** your analysis with the improved code
 
 ## Review Template

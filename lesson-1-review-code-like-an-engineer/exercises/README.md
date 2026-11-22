@@ -48,7 +48,7 @@ Each exercise follows this structure:
 concept#-exercise-name/
 ├── starter/
 │   └── code_file.py          # Code to review
-└── solution/
+└── solution/                 # In the Udacity workspace
     └── code_file.py          # Improved version with explanations
 ```
 

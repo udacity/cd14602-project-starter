@@ -13,7 +13,11 @@ Review a data processing function that demonstrates common code quality issues i
 
 ## Instructions
 
-### Step 1: Run Tests to See the Issues
+### Step 1: Read the Code Before Running Tests
+1. **Open** `starter/data_processor.py` and read the `process_data()` function without changing it
+2. **Note** what the function appears to do
+
+### Step 2: Run Tests to See the Issues
 ```bash
 cd concept1-data-processing-review/starter
 pytest test_data_processor.py -v
@@ -24,7 +28,7 @@ pytest test_data_processor.py -v
 - Error handling tests pass too: each one uses `pytest.raises` to confirm the crash (demonstrating missing error handling!)
 - Shows magic numbers and poor naming issues
 
-### Step 2: Review the Code
+### Step 3: Review the Code
 1. **Open** `starter/data_processor.py` and review the function
 2. **Apply** the engineering code review framework:
    - Structure & Organization
@@ -33,7 +37,8 @@ pytest test_data_processor.py -v
    - Testability
 3. **Document** your findings using the template below
 
-### Step 3: Run the Solution Tests
+### Step 4: Run the Solution Tests
+In the Udacity workspace, the `solution` folder sits next to `starter`:
 ```bash
 cd ../solution
 pytest test_data_processor.py -v
@@ -44,7 +49,7 @@ pytest test_data_processor.py -v
 - Error handling now works gracefully
 - Notice improved testability with constants
 
-### Step 4: Compare and Learn
+### Step 5: Compare and Learn
 4. **Compare** your analysis with the improved code
 
 ## Review Template
