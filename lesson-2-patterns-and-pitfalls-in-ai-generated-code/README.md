@@ -7,10 +7,11 @@ These exercises teach you to recognize common patterns in AI-generated code thro
 ## Exercise Structure
 
 Each exercise follows the same discovery-based approach:
-1. **Run the tests** to see the pattern in action
-2. **Analyze the code** using pattern-specific frameworks
-3. **Compare with solutions** that address the issues
-4. **Learn prevention strategies** for future AI interactions
+1. **Read the original code** before running the tests
+2. **Run the tests** to see the pattern in action
+3. **Analyze the code** using pattern-specific frameworks
+4. **Compare with solutions** that address the issues
+5. **Learn prevention strategies** for future AI interactions
 
 ## Concepts Covered
 

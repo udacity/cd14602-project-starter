@@ -17,7 +17,7 @@ API clients need proper error handling to provide good user experience and preve
 - **Issues**: Network errors crash the program, HTTP failures return None, no input validation
 - **Test File**: `test_api_errors.py` - Tests that demonstrate the problems
 
-### Solution Code (`solution/`)
+### Solution Code (`solution/`, in the Udacity workspace)
 - **File**: `api_client.py` - Fixed API client with proper error handling
 - **Improvements**: Try/catch blocks, HTTP status checking, structured error responses, input validation
 - **Test File**: `test_api_improvements.py` - Tests that verify the fixes work
@@ -31,8 +31,9 @@ pytest test_api_errors.py -v
 ```
 
 ### Test the Solution Code (Shows Fixes)
+In the Udacity workspace, the `solution` folder sits next to `starter`:
 ```bash
-cd solution/
+cd ../solution/
 python api_client.py
 pytest test_api_improvements.py -v
 ```

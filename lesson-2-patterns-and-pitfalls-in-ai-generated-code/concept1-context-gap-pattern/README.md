@@ -17,7 +17,10 @@ Review code that demonstrates the Context Gap pattern - when AI focuses on your 
 
 ## Instructions
 
-### Step 1: Run Tests to See the Pattern
+### Step 1: Read the Original Code First
+1. **Examine the original working code** in `starter/original_log_formatter.py`
+
+### Step 2: Run Tests to See the Pattern
 ```bash
 cd concept1-context-gap-pattern/starter
 pytest test_log_formatter.py -v
@@ -29,16 +32,16 @@ pytest test_log_formatter.py -v
 - **AI version workflow tests**: Pass (each one confirms a call the AI removed: file logging, monitoring, statistics)
 - **Comparison tests**: Clearly show the context gap pattern
 
-### Step 2: Review the Code  
-1. **First, examine the original working code** in `starter/original_log_formatter.py`
-2. **Then, review the AI-modified version** in `starter/log_formatter.py`
-3. **Compare the two versions** and apply the pattern recognition framework:
+### Step 3: Review the Code  
+1. **Review the AI-modified version** in `starter/log_formatter.py`
+2. **Compare the two versions** and apply the pattern recognition framework:
    - What functionality was in the original but missing in the AI version?
    - What was AI asked to add (timestamp formatting)?
    - What important features got removed in the process?
-4. **Document** your findings using the template below
+3. **Document** your findings using the template below
 
-### Step 3: Run the Solution Tests
+### Step 4: Run the Solution Tests
+In the Udacity workspace, the solution is in this lesson's `exercises` folder:
 ```bash
 cd ../../exercises/concept1-context-gap-pattern/solution
 pytest test_log_formatter.py -v
@@ -49,7 +52,7 @@ pytest test_log_formatter.py -v
 - Timestamp formatting integrated without losing existing features
 - Notice how all original functionality is preserved
 
-### Step 4: Compare and Learn
+### Step 5: Compare and Learn
 4. **Compare** your analysis with the improved code that maintains full context
 
 ## Review Template
