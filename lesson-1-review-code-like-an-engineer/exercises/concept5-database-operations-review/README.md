@@ -24,9 +24,8 @@ python -m pytest test_database_security.py -v
 ```
 
 **Expected Output:**
-- Basic functionality tests pass
-- Security tests pass too (for example, the `' OR '1'='1` email lookup returns a user)
-- Shows database security vulnerabilities
+- 9 of the 14 tests fail on this code: each failing test's docstring names the problem it points at
+- The 5 that pass already work and must keep passing
 
 ### Step 3: Review the Code
 1. **Open** `starter/database_manager.py` and review the functions
@@ -37,7 +36,13 @@ python -m pytest test_database_security.py -v
    - Security Issues
 3. **Document** your findings using the template below
 
-### Step 4: Run the Solution Tests
+### Step 4: Fix the Code, Then Compare With the Solution
+Use Claude Code to fix `starter/database_manager.py` until all 14 tests pass. The tests expect:
+- parameterized queries (`?` placeholders) instead of f-strings
+- `ValueError` with these messages: "Database path cannot be empty", "Email must be a non-empty string", "Name must be a non-empty string", "User ID must be a positive integer"
+- `update_user_email()` returning the number of rows it changed
+
+Then run the solution's tests, the same tests, to compare.
 In the Udacity workspace, the `solution` folder sits next to `starter`:
 ```bash
 cd ../solution
@@ -45,7 +50,7 @@ python -m pytest test_secure_database.py -v
 ```
 
 **Expected Output:**
-- All tests pass showing fixes work
+- All 14 tests pass: the same tests your fixed starter passes
 - SQL injection is now blocked
 - Notice improved parameterized queries
 

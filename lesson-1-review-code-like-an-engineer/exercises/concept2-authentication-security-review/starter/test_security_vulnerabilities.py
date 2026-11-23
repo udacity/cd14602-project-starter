@@ -1,180 +1,140 @@
-"""Tests for authentication system security."""
+"""Tests for secure authentication.
+
+These tests describe the fixed behaviour. Run them on the starter first: some fail, and each
+failing test's docstring says which problem it points at. Fix user_auth.py until they all pass.
+The tests create their users with register_user(username, password), which returns the new user's id.
+"""
+
+import inspect
 
 import pytest
-import sqlite3
+import user_auth
 from user_auth import UserAuth
 
 
-class TestBasicAuthentication:
-    """Tests for basic authentication functionality - these should work."""
+class TestBasicSecureAuthentication:
+    """Tests for basic secure authentication functionality."""
     
-    def test_valid_login_works(self):
-        """Test that normal login works."""
+    def test_user_registration_and_login_works(self):
+        """Fails on the starter: no register_user() to store a new user. Passes once fixed."""
         auth = UserAuth()
         
-        # Should work with correct credentials
-        token = auth.login("admin", "password123")
+        # Register a new user
+        user_id = auth.register_user("testuser", "secure_password_123")
+        assert user_id is not None
+        assert isinstance(user_id, int)
+        
+        # Login with correct credentials
+        token = auth.login("testuser", "secure_password_123")
         assert token is not None
-        assert len(token) == 32  # Should be 32 characters
+        assert len(token) > 20  # Should be a secure token
     
-    def test_invalid_password_fails(self):
-        """Test that wrong password fails."""
+    def test_wrong_password_fails(self):
+        """Fails on the starter: no register_user() to store a new user. Passes once fixed."""
         auth = UserAuth()
+        auth.register_user("testuser", "correct_password")
         
-        # Should fail with wrong password
-        token = auth.login("admin", "wrongpassword")
+        # Wrong password should fail
+        token = auth.login("testuser", "wrong_password")
         assert token is None
     
-    def test_invalid_username_fails(self):
-        """Test that wrong username fails."""
+    def test_nonexistent_user_fails(self):
+        """Test that nonexistent user fails securely."""
         auth = UserAuth()
         
-        # Should fail with wrong username
-        token = auth.login("nonexistent", "password123")
+        # Nonexistent user should fail
+        token = auth.login("nonexistent", "any_password")
         assert token is None
 
 
-class TestCriticalSecurityVulnerabilities:
-    """Tests that demonstrate actual security vulnerabilities - these show the problems!"""
+class TestSQLInjectionPrevention:
+    """Tests that SQL injection attacks are blocked."""
     
-    def test_sql_injection_authentication_bypass(self):
-        """
-        🚨 CRITICAL VULNERABILITY: SQL Injection
-        
-        This test shows that the authentication can be bypassed
-        using SQL injection. This is a CRITICAL security flaw!
-        """
+    def test_sql_injection_in_login_blocked(self):
+        """Fails on the starter: no register_user() yet; once it exists, login()'s f-string query lets the injection log in. Passes once fixed."""
         auth = UserAuth()
+        auth.register_user("alice", "secure_password")
         
-        # This should NEVER work, but it will due to SQL injection!
-        malicious_username = "admin' OR '1'='1"
-        token = auth.login(malicious_username, "any_password")
+        # These SQL injection attempts should all fail
+        sql_injections = [
+            "admin' OR '1'='1",
+            "admin'; DROP TABLE users; --",
+            "admin' UNION SELECT * FROM users --",
+            "' OR 1=1 --",
+        ]
         
-        assert token is not None
+        for injection in sql_injections:
+            token = auth.login(injection, "any_password")
+            assert token is None, f"SQL injection '{injection}' should be blocked!"
+
+
+class TestPasswordStorage:
+    """Tests that passwords are not stored as typed."""
+
+    def test_password_not_stored_in_plain_text(self):
+        """Fails on the starter: no register_user() yet; once it exists, the password is stored as typed. Passes once fixed."""
+        auth = UserAuth()
+        auth.register_user("hashuser", "Plain-Text-Pass-1")
+
+        rows = auth.db_connection.execute("SELECT * FROM users").fetchall()
+        for row in rows:
+            assert "Plain-Text-Pass-1" not in [str(value) for value in row], \
+                "The password is stored as typed; store a hash of it instead"
+
+
+class TestSecureTokenGeneration:
+    """Tests for secure token generation."""
     
-    def test_plain_text_password_storage(self):
-        """
-        🚨 CRITICAL VULNERABILITY: Plain text password storage
-        
-        Passwords are stored in plain text in the database!
-        """
+    def test_tokens_are_unique(self):
+        """Fails on the starter: no register_user() to store a new user. Passes once fixed."""
         auth = UserAuth()
+        auth.register_user("testuser", "password")
         
-        # Let's directly check the database to see plain text passwords
-        cursor = auth.db_connection.cursor()
-        cursor.execute("SELECT username, password FROM users")
-        users = cursor.fetchall()
-        
-        # Passwords should be hashed, but they're stored as plain text!
-        for username, password in users:
-            # In a secure system, this should be a hash, not readable text
-            assert len(password) < 50, "Passwords appear to be stored in plain text!"
-    
-    def test_no_input_validation(self):
-        """
-        🚨 VULNERABILITY: No input validation
-        
-        The system doesn't validate input lengths or characters.
-        """
-        auth = UserAuth()
-        
-        # Try extremely long inputs - should be validated but aren't
-        very_long_username = "a" * 10000
-        very_long_password = "b" * 10000
-        
-        # This should be rejected due to length, but it won't be!
-        try:
-            token = auth.login(very_long_username, very_long_password)
-            # If it doesn't crash, input validation is missing
-        except Exception as e:
-            # System crashed with long input - shows the problem
-            pass
-    
-    def test_weak_token_generation(self):
-        """
-        🚨 VULNERABILITY: Weak random token generation
-        
-        Tokens use basic random instead of cryptographically secure random.
-        """
-        auth = UserAuth()
-        
-        # Generate multiple tokens to check for patterns
+        # Generate multiple tokens
         tokens = []
         for _ in range(10):
-            token = auth.login("admin", "password123")
+            token = auth.login("testuser", "password")
             tokens.append(token)
         
-        # Check if tokens are truly random
-        unique_tokens = set(tokens)
-        assert len(unique_tokens) == len(tokens), "Tokens should be unique!"
-        
-        # All tokens should be different (they are), but they use weak randomness
-        # These look random but use insecure random.choice() instead of secrets
-
-
-class TestMissingSecurityFeatures:
-    """Tests that show missing security features."""
+        # All tokens should be unique
+        assert len(set(tokens)) == len(tokens), "All tokens should be unique"
     
-    def test_no_rate_limiting(self):
-        """
-        🚨 VULNERABILITY: No rate limiting
+    def test_tokens_have_good_length(self):
+        """Fails on the starter: no register_user() to store a new user. Passes once fixed."""
+        auth = UserAuth()
+        auth.register_user("testuser", "password")
         
-        Brute force attacks are possible - no protection against multiple attempts.
-        """
+        token = auth.login("testuser", "password")
+        assert len(token) >= 32, "Tokens should be at least 32 characters"
+
+    def test_tokens_use_secrets_module(self):
+        """Fails on the starter: tokens come from the predictable random module. Passes once fixed."""
+        source = inspect.getsource(user_auth)
+        assert "import random" not in source, "Session tokens must not come from the random module"
+        assert "secrets" in source, "Generate session tokens with the secrets module"
+
+
+class TestInputValidation:
+    """Tests for basic input validation."""
+    
+    def test_empty_username_handled(self):
+        """Fails on the starter: no register_user() to store a new user. Passes once fixed."""
         auth = UserAuth()
         
-        # Try many login attempts rapidly - should be rate limited but isn't
-        for i in range(100):
-            token = auth.login("admin", f"wrong_password_{i}")
-            # In a secure system, this would be blocked after a few attempts
-        
+        try:
+            auth.register_user("", "valid_password")
+            # If it doesn't raise an error, that's also acceptable
+        except ValueError:
+            # This is the preferred behavior
+            pass
     
-    def test_no_session_management(self):
-        """
-        🚨 VULNERABILITY: Poor session management
-        
-        Tokens are generated but not stored or managed properly.
-        """
+    def test_empty_password_handled(self):
+        """Fails on the starter: no register_user() to store a new user. Passes once fixed."""
         auth = UserAuth()
         
-        token1 = auth.login("admin", "password123")
-        token2 = auth.login("admin", "password123")
-        
-        # Both tokens are valid, but there's no way to invalidate them
-        # No session storage, no expiration, no logout functionality
-        assert token1 != token2  # Different tokens is good
-
-
-class TestDatabaseSecurityIssues:
-    """Tests that show database security problems."""
-    
-    def test_no_connection_cleanup(self):
-        """
-        🚨 VULNERABILITY: No proper connection cleanup
-        
-        Database connections are not properly managed.
-        """
-        auth = UserAuth()
-        
-        # The connection is created but never properly closed
-        assert auth.db_connection is not None
-        
-        # In a real app, this could lead to connection leaks
-    
-    def test_direct_database_access(self):
-        """
-        🚨 VULNERABILITY: Database connection exposed
-        
-        The database connection is directly accessible.
-        """
-        auth = UserAuth()
-        
-        # Anyone with access to the auth object can directly query the database
-        cursor = auth.db_connection.cursor()
-        cursor.execute("SELECT * FROM users")
-        all_users = cursor.fetchall()
-        
-        # Direct database access is possible - security issue
-        assert len(all_users) > 0
-
-
+        try:
+            auth.register_user("validuser", "")
+            # If it doesn't raise an error, that's also acceptable
+        except ValueError:
+            # This is the preferred behavior
+            pass

@@ -15,12 +15,12 @@ API clients need proper error handling to provide good user experience and preve
 ### Starter Code (`starter/`)
 - **File**: `api_client.py` - Simple API client with error handling problems
 - **Issues**: Network errors crash the program, HTTP failures return None, no input validation
-- **Test File**: `test_api_errors.py` - Tests that demonstrate the problems
+- **Test File**: `test_api_errors.py` - Tests of the fixed behaviour: 17 of the 19 fail on this code, and each failing test's docstring names the problem it points at
 
 ### Solution Code (`solution/`, in the Udacity workspace)
 - **File**: `api_client.py` - Fixed API client with proper error handling
 - **Improvements**: Try/catch blocks, HTTP status checking, structured error responses, input validation
-- **Test File**: `test_api_improvements.py` - Tests that verify the fixes work
+- **Test File**: `test_api_improvements.py` - The same 19 tests, all passing
 
 ## How to Run
 
@@ -29,6 +29,11 @@ API clients need proper error handling to provide good user experience and preve
 cd starter/
 pytest test_api_errors.py -v
 ```
+
+17 of the 19 tests fail. Use Claude Code to fix `starter/api_client.py` until all 19 pass. The tests expect:
+- `ValueError` with these messages: "Base URL cannot be empty", "API key cannot be empty", "User ID cannot be empty", "Data must be a non-empty dictionary"
+- `get_user_data()` returning the user's data on a 200, and otherwise a dictionary with an `"error"` message that says what went wrong: "not found" (404), "unauthorized" and "api key" (401), "server error" (500), the status code for any other, "timed out", "connect" or "Request failed" for network errors
+- `update_user()` returning `{"success": True, "message": ...}` with "updated" in the message, or `{"success": False, "error": ...}`, and sending the data with `json=` and a `Content-Type: application/json` header
 
 ### Test the Solution Code (Shows Fixes)
 In the Udacity workspace, the `solution` folder sits next to `starter`:

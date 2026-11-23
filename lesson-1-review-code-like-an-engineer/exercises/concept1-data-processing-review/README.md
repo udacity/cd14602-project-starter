@@ -24,9 +24,8 @@ pytest test_data_processor.py -v
 ```
 
 **Expected Output:**
-- Basic functionality tests pass
-- Error handling tests pass too: each one uses `pytest.raises` to confirm the crash (demonstrating missing error handling!)
-- Shows magic numbers and poor naming issues
+- 9 of the 12 tests fail on this code: each failing test's docstring names the problem it points at
+- The 3 that pass (empty list, no active items, zero value) already work and must keep passing
 
 ### Step 3: Review the Code
 1. **Open** `starter/data_processor.py` and review the function
@@ -37,7 +36,13 @@ pytest test_data_processor.py -v
    - Testability
 3. **Document** your findings using the template below
 
-### Step 4: Run the Solution Tests
+### Step 4: Fix the Code, Then Compare With the Solution
+Use Claude Code to fix `starter/data_processor.py` until all 12 tests pass. The tests expect:
+- `MULTIPLIER` and `MAX_VALUE` constants in place of 1.2 and 100
+- `ValueError("Input data must be a list")` for input that is not a list, `None` included
+- items missing a field skipped, so one bad item no longer stops the run
+
+Then run the solution's tests, the same tests, to compare.
 In the Udacity workspace, the `solution` folder sits next to `starter`:
 ```bash
 cd ../solution
@@ -45,7 +50,7 @@ pytest test_data_processor.py -v
 ```
 
 **Expected Output:**
-- All tests pass showing fixes work
+- All 12 tests pass: the same tests your fixed starter passes
 - Error handling now works gracefully
 - Notice improved testability with constants
 

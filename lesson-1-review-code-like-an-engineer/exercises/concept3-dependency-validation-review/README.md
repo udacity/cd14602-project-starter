@@ -31,9 +31,8 @@ pytest test_phantom_libraries.py -v -s
 ```
 
 **Expected Output:**
-- Import tests reveal dependency issues
-- Dependency validation tests demonstrate verification methods
-- Tests show patterns for validating external libraries
+- 10 of the 15 tests fail on this code: each failing test's docstring names the problem it points at
+- The other 5 pass already: two of them only check that pandas and the standard library are installed
 
 ### Step 3: Review the Code
 1. **Open** `starter/file_processor.py` and examine the imports
@@ -53,7 +52,12 @@ pytest test_phantom_libraries.py -v -s
    - Using `print()` instead of logging
    - Generic exception handling
 
-### Step 5: Run Real Dependencies Tests
+### Step 5: Fix the Code, Then Compare With the Solution
+Use Claude Code to fix `starter/file_processor.py` until all 15 tests pass. The tests expect:
+- `clean_dataframe(df)`, which drops empty rows and columns and strips whitespace, in place of the phantom `clean_dataset`
+- a module-level `logger = logging.getLogger(__name__)` used in place of `print()`
+
+Then run the solution's tests, the same tests, to compare.
 In the Udacity workspace, the `solution` folder sits next to `starter`:
 ```bash
 cd ../solution
@@ -61,7 +65,7 @@ pytest test_real_dependencies.py -v
 ```
 
 **Expected Output:**
-- All tests pass with real libraries
+- All 15 tests pass: the same tests your fixed starter passes
 - Proper error handling demonstrated
 - No phantom dependencies detected
 
