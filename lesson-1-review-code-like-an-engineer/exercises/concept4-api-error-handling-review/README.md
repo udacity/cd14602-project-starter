@@ -30,7 +30,7 @@ cd starter/
 pytest test_api_errors.py -v
 ```
 
-17 of the 19 tests fail. Use Claude Code to fix `starter/api_client.py` until all 19 pass. The tests expect:
+17 of the 19 tests fail. Use Claude Code to fix `starter/api_client.py` until all 19 pass. The tests mock `requests.get()` and `requests.put()`, so call those, and expect:
 - `ValueError` with these messages: "Base URL cannot be empty", "API key cannot be empty", "User ID cannot be empty", "Data must be a non-empty dictionary"
 - `get_user_data()` returning the user's data on a 200, and otherwise a dictionary with an `"error"` message that says what went wrong: "not found" (404), "unauthorized" and "api key" (401), "server error" (500), the status code for any other, "timed out", "connect" or "Request failed" for network errors
 - `update_user()` returning `{"success": True, "message": ...}` with "updated" in the message, or `{"success": False, "error": ...}`, and sending the data with `json=` and a `Content-Type: application/json` header

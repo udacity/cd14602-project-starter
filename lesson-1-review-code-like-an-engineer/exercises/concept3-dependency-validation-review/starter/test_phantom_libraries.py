@@ -13,6 +13,7 @@ These tests show:
 
 import pytest
 import os
+import shutil
 import tempfile
 import json
 import pandas as pd
@@ -44,23 +45,18 @@ class TestRealDependencies:
         assert hasattr(logging, 'info')
     
     def test_no_phantom_library_imports(self):
-        """Fails on the starter: process_uploaded_files() uses the phantom FastProcessor and clean_dataset. Passes once fixed."""
+        """Fails on the starter: it imports the phantom libraries advanced_file_processor and data_cleaner_pro. Passes once fixed."""
+        import ast
         import inspect
-        from file_processor import process_uploaded_files
-        
-        source = inspect.getsource(process_uploaded_files)
-        
-        # Should not contain phantom library imports
-        phantom_libraries = [
-            "advanced_file_processor",
-            "data_cleaner_pro",
-            "FastProcessor",
-            "clean_dataset"
-        ]
-        
-        for phantom in phantom_libraries:
-            assert phantom not in source, f"Should not import phantom library: {phantom}"
+        import file_processor
 
+        tree = ast.parse(inspect.getsource(file_processor))
+        imported = {alias.name.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
+        imported |= {node.module.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and node.module}
+
+        # Should not import phantom libraries (a comment or docstring may still name them)
+        for phantom in ["advanced_file_processor", "data_cleaner_pro"]:
+            assert phantom not in imported, f"Should not import phantom library: {phantom}"
 
 class TestImprovedFileProcessing:
     """Tests for improved file processing functionality."""
@@ -81,6 +77,10 @@ class TestImprovedFileProcessing:
                 {"name": "Alice", "age": 28, "city": "Chicago"},
                 {"name": "Bob", "age": 35, "city": "Boston"}
             ], f)
+    
+    def teardown_method(self):
+        """Remove the test files."""
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
     
     def test_processes_csv_files_with_pandas(self):
         """Fails on the starter: the mock fallbacks return made-up data instead of the file's. Passes once fixed."""
@@ -125,6 +125,14 @@ class TestImprovedFileProcessing:
 class TestSpecificErrorHandling:
     """Tests for specific error handling instead of generic exceptions."""
     
+    def setup_method(self):
+        """A folder for this test's files."""
+        self.temp_dir = tempfile.mkdtemp()
+    
+    def teardown_method(self):
+        """Remove the test files."""
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+    
     def test_file_not_found_error_handling(self):
         """Fails on the starter: a missing file still returns a (mock) result instead of nothing. Passes once fixed."""
         # Non-existent file should be handled specifically
@@ -134,8 +142,7 @@ class TestSpecificErrorHandling:
     def test_pandas_specific_error_handling(self):
         """Test handling of pandas-specific errors."""
         # Create an invalid CSV file
-        temp_dir = tempfile.mkdtemp()
-        invalid_csv = os.path.join(temp_dir, "invalid.csv")
+        invalid_csv = os.path.join(self.temp_dir, "invalid.csv")
         
         with open(invalid_csv, 'w') as f:
             f.write("this,is,not\nvalid,csv,format,with,too,many,columns\n")
@@ -150,8 +157,7 @@ class TestSpecificErrorHandling:
         # This test might not work on all systems, so we'll skip if needed
         try:
             # Try to create a file we can't read
-            temp_dir = tempfile.mkdtemp()
-            no_permission_file = os.path.join(temp_dir, "no_permission.csv")
+            no_permission_file = os.path.join(self.temp_dir, "no_permission.csv")
             
             with open(no_permission_file, 'w') as f:
                 f.write("test,data\n1,2\n")
@@ -159,12 +165,12 @@ class TestSpecificErrorHandling:
             # Remove read permission (Unix-like systems)
             if hasattr(os, 'chmod'):
                 os.chmod(no_permission_file, 0o000)
-                
-                result = process_uploaded_files([no_permission_file])
-                assert isinstance(result, list)  # Should handle gracefully
-                
-                # Restore permission for cleanup
-                os.chmod(no_permission_file, 0o644)
+                try:
+                    result = process_uploaded_files([no_permission_file])
+                    assert isinstance(result, list)  # Should handle gracefully
+                finally:
+                    # Restore permission for cleanup
+                    os.chmod(no_permission_file, 0o644)
         except (OSError, PermissionError):
             # Skip this test if we can't manipulate permissions
             pytest.skip("Cannot test permission errors on this system")
@@ -227,16 +233,22 @@ class TestLoggingInsteadOfPrint:
     
     def test_uses_logging_module(self):
         """Fails on the starter: it reports with print() instead of logging. Passes once fixed."""
+        import ast
         import inspect
-        from file_processor import process_uploaded_files
-        
-        source = inspect.getsource(process_uploaded_files)
-        
+        import file_processor
+
+        # Look inside the module's functions (a demo under `if __name__ == "__main__":` may still print)
+        tree = ast.parse(inspect.getsource(file_processor))
+        calls = [node for func in ast.walk(tree) if isinstance(func, ast.FunctionDef)
+                 for node in ast.walk(func) if isinstance(node, ast.Call)]
+        logger_calls = [c for c in calls if isinstance(c.func, ast.Attribute)
+                        and isinstance(c.func.value, ast.Name) and c.func.value.id == "logger"]
+        print_calls = [c for c in calls if isinstance(c.func, ast.Name) and c.func.id == "print"]
+
         # Should use logging instead of print
-        assert "logger." in source, "Should use logger for output"
+        assert logger_calls, "Should use logger for output"
         # Should not use print for normal operation
-        print_count = source.count("print(")
-        assert print_count == 0, f"Should not use print(), found {print_count} instances"
+        assert not print_calls, f"Should not use print(), found {len(print_calls)} instances"
     
     def test_logging_configuration_exists(self):
         """Fails on the starter: it reports with print() instead of logging. Passes once fixed."""

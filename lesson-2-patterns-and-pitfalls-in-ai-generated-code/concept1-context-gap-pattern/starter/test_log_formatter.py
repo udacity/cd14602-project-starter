@@ -39,30 +39,30 @@ class TestLogFormatterSolution:
         assert "[INFO]" in result  # Should default to INFO
         assert "test message" in result
     
-    @patch('log_formatter.write_to_log_file')
+    @patch('log_formatter.write_to_log_file', autospec=True)
     def test_file_logging_preserved(self, mock_file):
         """Fails on the starter: the AI version no longer calls write_to_log_file(). Passes once fixed."""
         result = format_log_entry("INFO", "Test message")
         
         mock_file.assert_called_once()
     
-    @patch('log_formatter.send_to_monitoring')
+    @patch('log_formatter.send_to_monitoring', autospec=True)
     def test_monitoring_integration_preserved(self, mock_monitoring):
         """Fails on the starter: the AI version no longer calls send_to_monitoring(). Passes once fixed."""
         result = format_log_entry("ERROR", "Critical issue", "user456")
         
         mock_monitoring.assert_called_once_with("ERROR", "Critical issue", "user456")
     
-    @patch('log_formatter.update_log_statistics')
+    @patch('log_formatter.update_log_statistics', autospec=True)
     def test_statistics_tracking_preserved(self, mock_stats):
         """Fails on the starter: the AI version no longer calls update_log_statistics(). Passes once fixed."""
         result = format_log_entry("WARNING", "Disk space low")
         
         mock_stats.assert_called_once_with("WARNING")
     
-    @patch('log_formatter.write_to_log_file')
-    @patch('log_formatter.send_to_monitoring')
-    @patch('log_formatter.update_log_statistics')
+    @patch('log_formatter.write_to_log_file', autospec=True)
+    @patch('log_formatter.send_to_monitoring', autospec=True)
+    @patch('log_formatter.update_log_statistics', autospec=True)
     def test_complete_workflow_with_timestamps(self, mock_stats, mock_monitoring, mock_file):
         """Fails on the starter: the AI version dropped the three calls while adding timestamps. Passes once fixed."""
         result = format_log_entry("CRITICAL", "System failure", "admin")

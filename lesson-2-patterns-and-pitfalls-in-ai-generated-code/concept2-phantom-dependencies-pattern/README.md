@@ -38,7 +38,7 @@ python -m pytest test_name_formatter.py -v
 3. **Document** your findings using the template below
 
 ### Step 4: Fix the Code, Then Compare With the Solution
-Use Claude Code to fix `starter/name_formatter.py` until all 5 tests pass.
+Use Claude Code to fix `starter/name_formatter.py` until all 5 tests pass, using only real libraries and keeping what the original version does (`starter/original_name_formatter.py` passes all 5).
 
 Then run the solution's tests, the same tests, to compare.
 In the Udacity workspace, the solution is in this lesson's `exercises` folder:

@@ -5,9 +5,35 @@ failing test's docstring says which problem it points at. Fix api_client.py unti
 Every test mocks requests, so none of them calls a real server.
 """
 
+import json
+
 import pytest
+import requests
 from unittest.mock import patch, Mock
 from api_client import APIClient
+
+
+def _response(status_code, json_data=None):
+    """A mocked requests.Response: status_code, ok, json(), text and raise_for_status() behave like the real one."""
+    data = {} if json_data is None else json_data
+    response = Mock()
+    response.status_code = status_code
+    response.ok = status_code < 400
+    response.json.return_value = data
+    response.text = json.dumps(data)
+    if status_code >= 400:
+        response.raise_for_status.side_effect = requests.exceptions.HTTPError(f"{status_code} Error", response=response)
+    else:
+        response.raise_for_status.return_value = None
+    return response
+
+
+@pytest.fixture(autouse=True)
+def no_real_requests(monkeypatch):
+    """The tests mock requests.get and requests.put. Anything else that would reach the network fails instead."""
+    def refuse(*args, **kwargs):
+        raise RuntimeError("A real HTTP request was attempted: call requests.get() / requests.put(), which these tests mock")
+    monkeypatch.setattr(requests.adapters.HTTPAdapter, "send", refuse)
 
 
 class TestImprovedAPIInitialization:
@@ -91,11 +117,8 @@ class TestImprovedHTTPStatusHandling:
     @patch('api_client.requests.get')
     def test_200_returns_json_data(self, mock_get):
         """Test that successful requests return the user's data."""
-        # Mock successful response (as JSON and as text, so either way of reading it works)
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"id": 123, "name": "John"}
-        mock_response.text = '{"id": 123, "name": "John"}'
+        # Mock successful response
+        mock_response = _response(200, {"id": 123, "name": "John"})
         mock_get.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
@@ -109,8 +132,7 @@ class TestImprovedHTTPStatusHandling:
     def test_404_returns_helpful_error_message(self, mock_get):
         """Fails on the starter: every non-200 response returns None, with no explanation. Passes once fixed."""
         # Mock 404 response
-        mock_response = Mock()
-        mock_response.status_code = 404
+        mock_response = _response(404)
         mock_get.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
@@ -124,8 +146,7 @@ class TestImprovedHTTPStatusHandling:
     def test_401_returns_helpful_error_message(self, mock_get):
         """Fails on the starter: every non-200 response returns None, with no explanation. Passes once fixed."""
         # Mock 401 response
-        mock_response = Mock()
-        mock_response.status_code = 401
+        mock_response = _response(401)
         mock_get.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
@@ -140,8 +161,7 @@ class TestImprovedHTTPStatusHandling:
     def test_500_returns_helpful_error_message(self, mock_get):
         """Fails on the starter: every non-200 response returns None, with no explanation. Passes once fixed."""
         # Mock 500 response
-        mock_response = Mock()
-        mock_response.status_code = 500
+        mock_response = _response(500)
         mock_get.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
@@ -155,8 +175,7 @@ class TestImprovedHTTPStatusHandling:
     def test_unknown_status_code_handled(self, mock_get):
         """Fails on the starter: every non-200 response returns None, with no explanation. Passes once fixed."""
         # Mock unknown status code
-        mock_response = Mock()
-        mock_response.status_code = 418  # I'm a teapot
+        mock_response = _response(418)  # I'm a teapot
         mock_get.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
@@ -174,8 +193,7 @@ class TestImprovedUpdateOperations:
     def test_successful_update_returns_detailed_result(self, mock_put):
         """Fails on the starter: update_user() returns a bare True/False. Passes once fixed."""
         # Mock successful update
-        mock_response = Mock()
-        mock_response.status_code = 200
+        mock_response = _response(200)
         mock_put.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
@@ -190,8 +208,7 @@ class TestImprovedUpdateOperations:
     def test_failed_update_returns_error_details(self, mock_put):
         """Fails on the starter: update_user() returns a bare True/False. Passes once fixed."""
         # Mock failed update
-        mock_response = Mock()
-        mock_response.status_code = 404
+        mock_response = _response(404)
         mock_put.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
@@ -273,8 +290,7 @@ class TestImprovedContentHandling:
     def test_update_sends_proper_json_content_type(self, mock_put):
         """Fails on the starter: the data is sent as a string with no JSON Content-Type. Passes once fixed."""
         # Mock successful response
-        mock_response = Mock()
-        mock_response.status_code = 200
+        mock_response = _response(200)
         mock_put.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
@@ -290,8 +306,7 @@ class TestImprovedContentHandling:
     def test_update_sends_json_data_properly(self, mock_put):
         """Fails on the starter: the data is sent as a string, not with json=. Passes once fixed."""
         # Mock successful response
-        mock_response = Mock()
-        mock_response.status_code = 200
+        mock_response = _response(200)
         mock_put.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")

@@ -41,6 +41,8 @@ Use Claude Code to fix `starter/database_manager.py` until all 14 tests pass. Th
 - parameterized queries (`?` placeholders) instead of f-strings
 - `ValueError` with these messages: "Database path cannot be empty", "Email must be a non-empty string", "Name must be a non-empty string", "User ID must be a positive integer"
 - `update_user_email()` returning the number of rows it changed
+- database errors (a missing table, a bad path) still raised
+- inputs such as `' OR '1'='1` stored and looked up as plain data rather than rejected
 
 Then run the solution's tests, the same tests, to compare.
 In the Udacity workspace, the `solution` folder sits next to `starter`:

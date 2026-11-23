@@ -54,6 +54,7 @@ pytest test_phantom_libraries.py -v -s
 
 ### Step 5: Fix the Code, Then Compare With the Solution
 Use Claude Code to fix `starter/file_processor.py` until all 15 tests pass. The tests expect:
+- `.csv` and `.json` files read with pandas, and an empty list for a missing file
 - `clean_dataframe(df)`, which drops empty rows and columns and strips whitespace, in place of the phantom `clean_dataset`
 - a module-level `logger = logging.getLogger(__name__)` used in place of `print()`
 

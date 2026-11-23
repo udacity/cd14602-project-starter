@@ -6,11 +6,18 @@ name_formatter is imported inside each test, so while it cannot be imported, eve
 it fails with the import error that names the missing library.
 """
 
+import ast
 import os
 
 import pytest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def _parse(name):
+    """The syntax tree of a file next to this test (it is read, not imported)."""
+    with open(os.path.join(HERE, name), "r") as f:
+        return ast.parse(f.read())
 
 
 class TestNameFormatterSolution:
@@ -47,32 +54,23 @@ class TestNameFormatterSolution:
     
     def test_uses_only_real_libraries(self):
         """Fails on the starter: the code imports phantom libraries. Passes once fixed."""
-    
-        with open(os.path.join(HERE, "name_formatter.py"), "r") as f:
-            solution_code = f.read()
-        
-        # Should NOT contain any phantom libraries
-        phantom_libraries = [
-            "name_formatter_pro",
-            "string_utils_plus", 
-            "text_optimizer"
-        ]
-        
-        for phantom in phantom_libraries:
-            assert phantom not in solution_code, f"Should not use phantom: {phantom}"
+        tree = _parse("name_formatter.py")
+        imported = {alias.name.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
+        imported |= {node.module.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and node.module}
+
+        # Should NOT import any phantom libraries (a comment may still name them)
+        for phantom in ["name_formatter_pro", "string_utils_plus", "text_optimizer"]:
+            assert phantom not in imported, f"Should not use phantom: {phantom}"
     
     def test_no_phantom_methods_used(self):
-        """Fails on the starter: the code calls methods of the phantom libraries. Passes once fixed."""
-        
-        with open(os.path.join(HERE, "name_formatter.py"), "r") as f:
-            solution_code = f.read()
-        
+        """Fails on the starter: it calls the phantom libraries' methods and no real string method. Passes once fixed."""
+        tree = _parse("name_formatter.py")
+        called = {node.func.attr for node in ast.walk(tree)
+                  if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)}
+
         # Should use real string methods
-        real_methods = [".strip()", ".title()", ".capitalize()"]
-        methods_found = sum(1 for method in real_methods if method in solution_code)
-        assert methods_found >= 1, "Should use real string methods"
+        assert called & {"strip", "title", "capitalize"}, "Should use real string methods"
         
         # Should NOT use phantom methods
-        phantom_methods = ["super_clean", "smart_title_case", "process_batch"]
-        for phantom_method in phantom_methods:
-            assert phantom_method not in solution_code, f"Should not use phantom method: {phantom_method}"
+        for phantom_method in ["super_clean", "smart_title_case", "process_batch"]:
+            assert phantom_method not in called, f"Should not use phantom method: {phantom_method}"

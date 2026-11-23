@@ -38,9 +38,10 @@ pytest test_security_vulnerabilities.py -v
 
 ### Step 4: Fix the Code, Then Compare With the Solution
 Use Claude Code to fix `starter/user_auth.py` until all 10 tests pass. The tests expect:
-- `register_user(username, password)`, which stores a new user and returns the new user's id
+- `register_user(username, password)`, which stores a new user in the `users` table of `self.db_connection` and returns the new user's id
 - a hash of the password stored, never the password as typed
-- session tokens from the `secrets` module, not `random`
+- `login()` returning `None` for any failed login
+- session tokens of at least 32 characters from the `secrets` module, not `random`
 
 Then run the solution's tests, the same tests, to compare.
 In the Udacity workspace, the `solution` folder sits next to `starter`:

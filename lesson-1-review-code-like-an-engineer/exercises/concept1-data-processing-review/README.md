@@ -40,7 +40,7 @@ pytest test_data_processor.py -v
 Use Claude Code to fix `starter/data_processor.py` until all 12 tests pass. The tests expect:
 - `MULTIPLIER` and `MAX_VALUE` constants in place of 1.2 and 100
 - `ValueError("Input data must be a list")` for input that is not a list, `None` included
-- items missing a field skipped, so one bad item no longer stops the run
+- items missing a field, or that are not dictionaries (`None`), skipped, so one bad item no longer stops the run
 
 Then run the solution's tests, the same tests, to compare.
 In the Udacity workspace, the `solution` folder sits next to `starter`:

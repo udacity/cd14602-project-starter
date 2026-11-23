@@ -5,6 +5,7 @@ failing test's docstring says which problem it points at. Fix user_auth.py until
 The tests create their users with register_user(username, password), which returns the new user's id.
 """
 
+import ast
 import inspect
 
 import pytest
@@ -109,9 +110,11 @@ class TestSecureTokenGeneration:
 
     def test_tokens_use_secrets_module(self):
         """Fails on the starter: tokens come from the predictable random module. Passes once fixed."""
-        source = inspect.getsource(user_auth)
-        assert "import random" not in source, "Session tokens must not come from the random module"
-        assert "secrets" in source, "Generate session tokens with the secrets module"
+        tree = ast.parse(inspect.getsource(user_auth))
+        imported = {alias.name.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
+        imported |= {node.module.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and node.module}
+        assert "random" not in imported, "Session tokens must not come from the random module"
+        assert "secrets" in imported, "Generate session tokens with the secrets module"
 
 
 class TestInputValidation:
