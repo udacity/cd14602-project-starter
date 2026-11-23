@@ -1,241 +1,266 @@
-"""Tests for phantom library detection and AI-generated code patterns."""
+"""
+Tests for the file processor with real dependencies.
+
+These tests describe the fixed behaviour. Run them on the starter first: some fail, and each
+failing test's docstring says which problem it points at. Fix file_processor.py until they all pass.
+clean_dataframe(df) is imported inside the tests that use it, so until it exists only those tests fail.
+
+These tests show:
+1. Real libraries that actually exist
+2. Proper error handling and logging
+3. Specific exception types instead of generic ones
+"""
 
 import pytest
-import sys
-from file_processor import process_uploaded_files, ADVANCED_PROCESSOR_AVAILABLE, DATA_CLEANER_AVAILABLE
+import os
+import shutil
+import tempfile
+import json
+import pandas as pd
+from file_processor import process_uploaded_files
 
 
-class TestPhantomLibraryDetection:
-    """Tests that reveal phantom library issues - these should all pass showing the problems."""
+class TestRealDependencies:
+    """Tests that verify real libraries are used."""
     
-    def test_phantom_libraries_not_available(self):
-        """Phantom libraries should not be available (this test passes, showing the problem)."""
-        # These should be False because the libraries don't exist
-        assert ADVANCED_PROCESSOR_AVAILABLE == False, "advanced_file_processor should not exist"
-        assert DATA_CLEANER_AVAILABLE == False, "data_cleaner_pro should not exist"
-        
+    def test_uses_real_pandas_library(self):
+        """Verify that pandas (a real library) is used."""
+        # Pandas should be importable and functional
+        df = pd.DataFrame({'test': [1, 2, 3]})
+        assert len(df) == 3
+        assert 'test' in df.columns
     
-    def test_import_errors_are_handled(self):
-        """Import errors for phantom libraries should occur (showing they don't exist)."""
-        # Try to import the phantom libraries directly
-        with pytest.raises(ImportError):
-            import advanced_file_processor
+    def test_uses_standard_library_modules(self):
+        """Verify that standard library modules are used."""
+        # These should all be available in Python standard library
+        import os
+        import logging
         
-        with pytest.raises(ImportError):
-            import data_cleaner_pro
+        # os module functionality should work
+        assert hasattr(os, 'path')
+        assert hasattr(os, 'listdir')
         
+        # logging module should be functional
+        assert hasattr(logging, 'getLogger')
+        assert hasattr(logging, 'info')
     
-    def test_code_still_runs_with_phantom_libraries(self):
-        """Code should still run using mock implementations (masking the problem)."""
-        test_files = ["test1.csv", "test2.json"]
+    def test_no_phantom_library_imports(self):
+        """Fails on the starter: it imports the phantom libraries advanced_file_processor and data_cleaner_pro. Passes once fixed."""
+        import ast
+        import inspect
+        import file_processor
+
+        tree = ast.parse(inspect.getsource(file_processor))
+        imported = {alias.name.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
+        imported |= {node.module.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and node.module}
+
+        # Should not import phantom libraries (a comment or docstring may still name them)
+        for phantom in ["advanced_file_processor", "data_cleaner_pro"]:
+            assert phantom not in imported, f"Should not import phantom library: {phantom}"
+
+class TestImprovedFileProcessing:
+    """Tests for improved file processing functionality."""
+    
+    def setup_method(self):
+        """Set up test files for each test."""
+        self.temp_dir = tempfile.mkdtemp()
         
-        # This should not crash even though phantom libraries don't exist
-        result = process_uploaded_files(test_files)
+        # Create test CSV file
+        self.csv_file = os.path.join(self.temp_dir, "test.csv")
+        with open(self.csv_file, 'w') as f:
+            f.write("name,age,city\nJohn,25,NYC\nJane,30,LA\n")
         
-        # Should return results (using mock implementations)
+        # Create test JSON file
+        self.json_file = os.path.join(self.temp_dir, "test.json")
+        with open(self.json_file, 'w') as f:
+            json.dump([
+                {"name": "Alice", "age": 28, "city": "Chicago"},
+                {"name": "Bob", "age": 35, "city": "Boston"}
+            ], f)
+    
+    def teardown_method(self):
+        """Remove the test files."""
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+    
+    def test_processes_csv_files_with_pandas(self):
+        """Fails on the starter: the mock fallbacks return made-up data instead of the file's. Passes once fixed."""
+        result = process_uploaded_files([self.csv_file])
+        
+        assert len(result) == 1
+        df = result[0]
+        assert isinstance(df, pd.DataFrame)
+        assert len(df) == 2  # Two rows of data
+        assert 'name' in df.columns
+        assert 'age' in df.columns
+        assert 'city' in df.columns
+    
+    def test_processes_json_files_with_pandas(self):
+        """Fails on the starter: the mock fallbacks return made-up data instead of the file's. Passes once fixed."""
+        result = process_uploaded_files([self.json_file])
+        
+        assert len(result) == 1
+        df = result[0]
+        assert isinstance(df, pd.DataFrame)
+        assert len(df) == 2  # Two rows of data
+        assert 'name' in df.columns
+    
+    def test_handles_multiple_file_types(self):
+        """Test processing multiple file types together."""
+        result = process_uploaded_files([self.csv_file, self.json_file])
+        
+        assert len(result) == 2
+        for df in result:
+            assert isinstance(df, pd.DataFrame)
+            assert len(df) > 0
+    
+    def test_nonexistent_file_handling(self):
+        """Fails on the starter: a missing file still returns a (mock) result instead of nothing. Passes once fixed."""
+        nonexistent_file = os.path.join(self.temp_dir, "does_not_exist.csv")
+        
+        # Should handle gracefully and return empty list
+        result = process_uploaded_files([nonexistent_file])
+        assert result == []
+
+
+class TestSpecificErrorHandling:
+    """Tests for specific error handling instead of generic exceptions."""
+    
+    def setup_method(self):
+        """A folder for this test's files."""
+        self.temp_dir = tempfile.mkdtemp()
+    
+    def teardown_method(self):
+        """Remove the test files."""
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+    
+    def test_file_not_found_error_handling(self):
+        """Fails on the starter: a missing file still returns a (mock) result instead of nothing. Passes once fixed."""
+        # Non-existent file should be handled specifically
+        result = process_uploaded_files(["nonexistent.csv"])
+        assert result == []  # Should handle gracefully
+    
+    def test_pandas_specific_error_handling(self):
+        """Test handling of pandas-specific errors."""
+        # Create an invalid CSV file
+        invalid_csv = os.path.join(self.temp_dir, "invalid.csv")
+        
+        with open(invalid_csv, 'w') as f:
+            f.write("this,is,not\nvalid,csv,format,with,too,many,columns\n")
+        
+        # Should handle pandas parsing errors gracefully
+        result = process_uploaded_files([invalid_csv])
+        # Might succeed or fail depending on pandas parsing, but shouldn't crash
         assert isinstance(result, list)
-        assert len(result) == len(test_files)
-        
-
-
-class TestAIGeneratedCodePatterns:
-    """Tests that identify patterns typical of AI-generated code."""
     
-    def test_library_names_are_suspiciously_generic(self):
-        """Library names follow AI patterns: generic + descriptive."""
-        suspicious_libraries = [
-            "advanced_file_processor",  # "advanced" + specific function
-            "data_cleaner_pro",         # specific function + "pro"
-        ]
-        
-        for lib_name in suspicious_libraries:
-            # These names are "too good to be true" - very generic pattern
-            assert "advanced" in lib_name or "pro" in lib_name, f"{lib_name} follows AI naming pattern"
-    
-    def test_function_usage_looks_plausible_but_fake(self):
-        """Function calls look reasonable but use non-existent APIs."""
-        # These would be the function calls if libraries existed:
-        # FastProcessor(optimization_level=3)  <- Plausible but fake
-        # clean_dataset(data, method='auto_detect')  <- Sounds great but fake
-        
-        # The parameters look too convenient:
-        suspicious_params = [
-            "optimization_level=3",     # Generic optimization parameter
-            "method='auto_detect'",     # Magic "auto" parameter
-        ]
-        
-        # These are typical AI patterns - parameters that sound great but are made up
-        for param in suspicious_params:
-            assert "auto" in param or "optimization" in param, f"{param} is suspiciously convenient"
-            print(f"🚩 Too-convenient parameter: {param}")
-    
-    def test_missing_error_handling_patterns(self):
-        """AI code often has generic error handling."""
-        # Read the source file to check error handling patterns
-        import inspect
-        source = inspect.getsource(process_uploaded_files)
-        
-        # Look for generic exception handling (AI pattern)
-        assert "except Exception as e:" in source, "Uses generic Exception (AI pattern)"
-        assert "print(" in source, "Uses print() instead of logging (AI pattern)"
-        
-        print("🚩 Generic exception handling detected (AI pattern)")
-        print("🚩 Uses print() instead of logging (AI pattern)")
-    
-    def test_plausible_but_unverifiable_functionality(self):
-        """AI often creates plausible-sounding but unverifiable features."""
-        # The phantom libraries claim to do:
-        # 1. "Advanced" file processing with optimization levels
-        # 2. "Pro" data cleaning with auto-detection
-        # 3. Seamless integration with pandas
-        
-        # These sound great but are red flags:
-        red_flags = [
-            "optimization_level",  # Vague performance claim
-            "auto_detect",        # Magic auto-functionality  
-            "FastProcessor",      # Generic speed claim
-            "clean_dataset",      # One-function-does-all
-        ]
-        
-        # In real libraries, these would need extensive documentation
-        # AI often creates these "perfect" APIs that are too convenient
-        for flag in red_flags:
-            print(f"🚩 Red flag detected: {flag} (sounds too convenient)")
-            assert True  # This test always passes, just demonstrates the issues
-
-
-class TestDependencyValidation:
-    """Tests for proper dependency validation - these show how to verify libraries."""
-    
-    def test_can_verify_real_libraries_exist(self):
-        """Real libraries should be verifiable."""
-        # These libraries should exist and be importable
+    def test_permission_error_handling(self):
+        """Test handling of permission errors."""
+        # This test might not work on all systems, so we'll skip if needed
         try:
-            import os
-            import pandas as pd
-            print("✓ Real libraries (os, pandas) are available")
-        except ImportError as e:
-            pytest.fail(f"Real library import failed: {e}")
-    
-    def test_phantom_library_verification_methods(self):
-        """Show how to verify if libraries are real."""
-        phantom_libraries = ["advanced_file_processor", "data_cleaner_pro"]
-        
-        for lib_name in phantom_libraries:
-            # Method 1: Try import
-            try:
-                __import__(lib_name)
-                pytest.fail(f"{lib_name} should not be importable!")
-            except ImportError:
-                print(f"✓ {lib_name} correctly fails import test")
+            # Try to create a file we can't read
+            no_permission_file = os.path.join(self.temp_dir, "no_permission.csv")
             
-            # Method 2: Check if it would be in sys.modules
-            assert lib_name not in sys.modules, f"{lib_name} should not be in sys.modules"
+            with open(no_permission_file, 'w') as f:
+                f.write("test,data\n1,2\n")
             
-            # Method 3: In real scenario, you would:
-            # - Search PyPI (pip search)
-            # - Check GitHub
-            # - Google for documentation
-            # - Look for official websites
-            print(f"💡 To verify {lib_name}: check PyPI, GitHub, Google for docs")
-    
-    def test_replacement_with_real_libraries(self):
-        """Show how phantom libraries could be replaced with real ones."""
-        # Instead of phantom libraries, could use:
-        real_alternatives = {
-            "advanced_file_processor": ["pandas", "openpyxl", "chardet"],
-            "data_cleaner_pro": ["pandas", "numpy", "scikit-learn"]
-        }
-        
-        for phantom, alternatives in real_alternatives.items():
-            print(f"Instead of {phantom}, could use: {', '.join(alternatives)}")
-            
-            # Verify at least pandas is available (common real alternative)
-            try:
-                import pandas
-                print(f"✓ pandas is available as replacement for {phantom}")
-            except ImportError:
-                pytest.fail("pandas should be available as a real alternative")
+            # Remove read permission (Unix-like systems)
+            if hasattr(os, 'chmod'):
+                os.chmod(no_permission_file, 0o000)
+                try:
+                    result = process_uploaded_files([no_permission_file])
+                    assert isinstance(result, list)  # Should handle gracefully
+                finally:
+                    # Restore permission for cleanup
+                    os.chmod(no_permission_file, 0o644)
+        except (OSError, PermissionError):
+            # Skip this test if we can't manipulate permissions
+            pytest.skip("Cannot test permission errors on this system")
 
 
-class TestCodeQualityIssues:
-    """Tests that reveal other code quality issues beyond phantom libraries."""
+class TestDataCleaning:
+    """Tests for the data cleaning functionality."""
     
-    def test_uses_print_instead_of_logging(self):
-        """Code uses print() instead of proper logging (poor practice)."""
+    def test_clean_dataframe_removes_empty_rows(self):
+        """Fails on the starter: no clean_dataframe(df), only the phantom clean_dataset. Passes once fixed."""
+        from file_processor import clean_dataframe
+        df = pd.DataFrame({
+            'name': ['Alice', None, 'Bob'],
+            'age': [25, None, 30],
+            'city': ['NYC', None, 'LA']
+        })
+        
+        cleaned = clean_dataframe(df)
+        
+        # Should remove the completely empty/null row
+        assert len(cleaned) == 2
+        assert 'Alice' in cleaned['name'].values
+        assert 'Bob' in cleaned['name'].values
+    
+    def test_clean_dataframe_removes_empty_columns(self):
+        """Fails on the starter: no clean_dataframe(df), only the phantom clean_dataset. Passes once fixed."""
+        from file_processor import clean_dataframe
+        df = pd.DataFrame({
+            'name': ['Alice', 'Bob'],
+            'empty_col': [None, None],
+            'age': [25, 30]
+        })
+        
+        cleaned = clean_dataframe(df)
+        
+        # Should remove the empty column
+        assert 'empty_col' not in cleaned.columns
+        assert 'name' in cleaned.columns
+        assert 'age' in cleaned.columns
+    
+    def test_clean_dataframe_strips_whitespace(self):
+        """Fails on the starter: no clean_dataframe(df), only the phantom clean_dataset. Passes once fixed."""
+        from file_processor import clean_dataframe
+        df = pd.DataFrame({
+            'name': ['  Alice  ', '  Bob  '],
+            'city': [' NYC ', ' LA ']
+        })
+        
+        cleaned = clean_dataframe(df)
+        
+        # Whitespace should be stripped
+        assert cleaned['name'].iloc[0] == 'Alice'
+        assert cleaned['name'].iloc[1] == 'Bob'
+        assert cleaned['city'].iloc[0] == 'NYC'
+        assert cleaned['city'].iloc[1] == 'LA'
+
+
+class TestLoggingInsteadOfPrint:
+    """Tests that verify proper logging is used instead of print statements."""
+    
+    def test_uses_logging_module(self):
+        """Fails on the starter: it reports with print() instead of logging. Passes once fixed."""
+        import ast
         import inspect
-        source = inspect.getsource(process_uploaded_files)
-        
-        # Should use logging, not print
-        assert "print(" in source, "Code uses print() instead of logging"
+        import file_processor
+
+        # Look inside the module's functions (a demo under `if __name__ == "__main__":` may still print)
+        tree = ast.parse(inspect.getsource(file_processor))
+        calls = [node for func in ast.walk(tree) if isinstance(func, ast.FunctionDef)
+                 for node in ast.walk(func) if isinstance(node, ast.Call)]
+        logger_calls = [c for c in calls if isinstance(c.func, ast.Attribute)
+                        and isinstance(c.func.value, ast.Name) and c.func.value.id == "logger"]
+        print_calls = [c for c in calls if isinstance(c.func, ast.Name) and c.func.id == "print"]
+
+        # Should use logging instead of print
+        assert logger_calls, "Should use logger for output"
         # Should not use print for normal operation
-        print_count = source.count("print(")
-        assert print_count > 0, f"Found {print_count} print() statements (should use logging)"
-        
-        print(f"🚩 Found {print_count} print() statements (should use logging)")
+        assert not print_calls, f"Should not use print(), found {len(print_calls)} instances"
     
-    def test_generic_exception_handling(self):
-        """Code uses overly generic exception handling (AI pattern)."""
+    def test_logging_configuration_exists(self):
+        """Fails on the starter: it reports with print() instead of logging. Passes once fixed."""
+        import file_processor
+        import logging
         import inspect
-        source = inspect.getsource(process_uploaded_files)
         
-        # Generic exception handling is often an AI pattern
-        assert "except Exception as e:" in source, "Uses generic Exception handling"
-        # Better would be specific exceptions like FileNotFoundError, etc.
-        print("🚩 Uses generic 'except Exception' (should be specific)")
-    
-    def test_missing_input_validation(self):
-        """Code lacks proper input validation (will process bad input incorrectly)."""
-        # Test with invalid inputs that should be validated but aren't
-        
-        # Test 1: None input - should crash
-        with pytest.raises(TypeError):
-            result = process_uploaded_files(None)
-            print("⚠️ None input crashes (no validation)")
-        
-        # Test 2: String input instead of list - will process each character as filename
-        result = process_uploaded_files("not a list")  # Each character becomes a "file path"
-        # This demonstrates the problem - no validation means wrong behavior
-        assert isinstance(result, list)  # It "works" but processes characters as files
-        print(f"⚠️ String input processed {len(result)} characters as files (no validation)")
-        
-        print("🚩 Missing input validation - code accepts wrong input types")
+        # Should have logging configuration
+        source = inspect.getsource(file_processor)
+        assert "logging.basicConfig" in source or "getLogger" in source, "Should configure logging"
 
 
-class TestAIDetectionSummary:
-    """Summary test that identifies all AI-generated patterns."""
-    
-    def test_ai_pattern_detection_summary(self):
-        """Comprehensive test showing all AI-generated code red flags."""
-        
-        ai_red_flags_found = []
-        
-        # Check for phantom libraries
-        if not ADVANCED_PROCESSOR_AVAILABLE:
-            ai_red_flags_found.append("Phantom library: advanced_file_processor")
-        if not DATA_CLEANER_AVAILABLE:
-            ai_red_flags_found.append("Phantom library: data_cleaner_pro")
-        
-        # Check code patterns
-        import inspect
-        source = inspect.getsource(process_uploaded_files)
-        
-        if "except Exception as e:" in source:
-            ai_red_flags_found.append("Generic exception handling")
-        if "print(" in source:
-            ai_red_flags_found.append("Uses print() instead of logging")
-        if "optimization_level" in source:
-            ai_red_flags_found.append("Too-convenient parameters")
-        if "auto_detect" in source:
-            ai_red_flags_found.append("Magic 'auto' functionality")
-        
-        # This test passes but shows all the problems
-        assert len(ai_red_flags_found) > 0, "Should find AI patterns"
-        
-        print("\n🤖 AI-GENERATED CODE RED FLAGS DETECTED:")
-        for flag in ai_red_flags_found:
-            print(f"  🚩 {flag}")
-        
-        print(f"\nTotal AI red flags found: {len(ai_red_flags_found)}")
-        print("This code shows classic signs of AI generation!")
-
+if __name__ == "__main__":
+    import sys
+    sys.exit(pytest.main([__file__, "-v"]))

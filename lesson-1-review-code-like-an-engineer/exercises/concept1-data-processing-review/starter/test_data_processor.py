@@ -1,14 +1,20 @@
-"""Tests for data processing function."""
+"""Tests for the data processing function.
+
+These tests describe the fixed behaviour. Run them on the starter first: some fail, and each
+failing test's docstring says which problem it points at. Fix data_processor.py until they all pass.
+The constants are imported inside the tests that use them, so a missing constant fails only those tests.
+"""
 
 import pytest
 from data_processor import process_data
 
 
 class TestDataProcessorBasic:
-    """Tests for basic functionality - these should work."""
+    """Tests for basic functionality."""
     
     def test_processes_active_items(self):
-        """Test basic functionality with clean data."""
+        """Fails on the starter: no MULTIPLIER / MAX_VALUE constants (magic numbers). Passes once fixed."""
+        from data_processor import MULTIPLIER, MAX_VALUE
         test_data = [
             {'id': 1, 'status': 'active', 'value': 50},
             {'id': 2, 'status': 'inactive', 'value': 75},
@@ -20,9 +26,9 @@ class TestDataProcessorBasic:
         # Should only process active items
         assert len(result) == 2
         assert result[0]['id'] == 1
-        assert result[0]['processed_value'] == 60.0
+        assert result[0]['processed_value'] == 50 * MULTIPLIER  # Now using constants
         assert result[1]['id'] == 3
-        assert result[1]['processed_value'] == 100
+        assert result[1]['processed_value'] == MAX_VALUE  # Capped at max value
     
     def test_empty_list_returns_empty(self):
         """Test with empty input."""
@@ -41,72 +47,70 @@ class TestDataProcessorBasic:
 
 
 class TestDataProcessorErrorHandling:
-    """Tests that pass by confirming the crash - showing missing error handling."""
+    """Tests for error handling."""
     
     def test_missing_required_fields_handled_gracefully(self):
-        """Passes by confirming the crash - shows missing error handling."""
+        """Fails on the starter: an item missing a field crashes the run (KeyError). Passes once fixed."""
         problematic_data = [
             {'id': 1, 'status': 'active', 'value': 50},  # Good item
-            {'id': 5, 'status': 'active'},               # Missing 'value' - will crash
-            {'id': 6, 'value': 30},                      # Missing 'status' - will crash
+            {'id': 5, 'status': 'active'},               # Missing 'value'
+            {'id': 6, 'value': 30},                      # Missing 'status'
         ]
         
-        # This should process the good item and skip bad ones, but it will crash instead
-        with pytest.raises(KeyError):
-            result = process_data(problematic_data)
-            # If this didn't crash, we'd expect:
-            # assert len(result) == 1
-            # assert result[0]['id'] == 1
+        # Should process the good item and skip the bad ones
+        result = process_data(problematic_data)
+        assert len(result) == 1
+        assert result[0]['id'] == 1
     
     def test_invalid_input_type_raises_clear_error(self):
-        """Passes by confirming the crash - shows missing input validation."""
-        # Should validate input type, but it doesn't
-        with pytest.raises(TypeError):
-            process_data("not a list")  # Will crash with unhelpful error
+        """Fails on the starter: no input validation, so a string crashes with a TypeError. Passes once fixed."""
+        with pytest.raises(ValueError, match="Input data must be a list"):
+            process_data("not a list")
     
     def test_none_input_raises_clear_error(self):
-        """Passes by confirming the crash - shows missing input validation."""
-        # Should handle None gracefully, but it doesn't
-        with pytest.raises(TypeError):
-            process_data(None)  # Will crash
+        """Fails on the starter: no input validation, so None crashes with a TypeError. Passes once fixed."""
+        with pytest.raises(ValueError, match="Input data must be a list"):
+            process_data(None)
 
 
 class TestDataProcessorConstants:
-    """Tests that show how magic numbers make code hard to test and understand."""
+    """Tests that show how constants improve testability."""
     
-    def test_multiplier_constant_makes_tests_hard(self):
-        """Magic numbers make tests unclear - what is 1.2?"""
+    def test_multiplier_constant_makes_tests_clear(self):
+        """Fails on the starter: 1.2 is a magic number, not a MULTIPLIER constant. Passes once fixed."""
+        from data_processor import MULTIPLIER
         test_data = [{'id': 1, 'status': 'active', 'value': 10}]
         result = process_data(test_data)
         
-        # We have to use the magic number in our test - bad practice
-        expected_value = 10 * 1.2  # What is 1.2? Why 1.2?
+        # Now we can use the named constant in our test
+        expected_value = 10 * MULTIPLIER
         assert result[0]['processed_value'] == expected_value
     
-    def test_max_value_constant_makes_capping_unclear(self):
-        """Magic numbers make the capping logic unclear - what is 100?"""
+    def test_max_value_constant_makes_capping_testable(self):
+        """Fails on the starter: 100 is a magic number, not a MAX_VALUE constant. Passes once fixed."""
+        from data_processor import MAX_VALUE
         test_data = [{'id': 1, 'status': 'active', 'value': 200}]
         result = process_data(test_data)
         
-        # We have to use the magic number - unclear why it's 100
-        assert result[0]['processed_value'] == 100  # Why 100? Where does this come from?
+        # Clear test using the named constant
+        assert result[0]['processed_value'] == MAX_VALUE
     
-    def test_edge_case_hard_to_test_with_magic_numbers(self):
-        """Testing edge cases is hard when values are magic numbers."""
-        # What input value results in exactly the max after processing?
-        # With magic numbers, this calculation is unclear:
-        input_value = 100 / 1.2  # Magic numbers make this confusing
+    def test_edge_case_exactly_at_max_after_processing(self):
+        """Fails on the starter: no MULTIPLIER / MAX_VALUE constants (magic numbers). Passes once fixed."""
+        from data_processor import MULTIPLIER, MAX_VALUE
+        # Calculate input that will result in exactly MAX_VALUE after processing
+        input_value = MAX_VALUE / MULTIPLIER
         test_data = [{'id': 1, 'status': 'active', 'value': input_value}]
         result = process_data(test_data)
         
-        assert result[0]['processed_value'] == 100
+        assert result[0]['processed_value'] == MAX_VALUE
 
 
 class TestDataProcessorRobustness:
-    """Tests for edge cases - the last one passes by confirming the crash."""
+    """Tests for robustness and edge cases."""
     
     def test_zero_value_handled(self):
-        """Zero values should work fine."""
+        """Zero values are handled correctly."""
         test_data = [{'id': 1, 'status': 'active', 'value': 0}]
         result = process_data(test_data)
         
@@ -114,27 +118,27 @@ class TestDataProcessorRobustness:
         assert result[0]['processed_value'] == 0.0
     
     def test_negative_value_handled(self):
-        """Negative values should work (no validation prevents them)."""
+        """Fails on the starter: 1.2 is a magic number, not a MULTIPLIER constant. Passes once fixed."""
+        from data_processor import MULTIPLIER
         test_data = [{'id': 1, 'status': 'active', 'value': -10}]
         result = process_data(test_data)
         
         assert len(result) == 1
-        assert result[0]['processed_value'] == -12.0  # -10 * 1.2
+        assert result[0]['processed_value'] == -10 * MULTIPLIER
     
     def test_mixed_valid_and_invalid_data(self):
-        """Passes by confirming the crash - shows how bad data crashes everything."""
+        """Fails on the starter: one bad item (missing field, None) crashes the whole run. Passes once fixed."""
         mixed_data = [
             {'id': 1, 'status': 'active', 'value': 50},     # Valid
-            {'id': 2, 'status': 'active'},                  # Missing value - will crash
+            {'id': 2, 'status': 'active'},                  # Missing value
             {'id': 3, 'status': 'active', 'value': 30},     # Valid
-            None,                                            # Invalid item - will crash
-            {'id': 4, 'value': 40},                         # Missing status - will crash
+            None,                                            # Invalid item
+            {'id': 4, 'value': 40},                         # Missing status
         ]
         
-        # This will crash on the first bad item, instead of processing the good ones
-        with pytest.raises((KeyError, TypeError)):
-            result = process_data(mixed_data)
-            # If it worked properly, we'd expect:
-            # assert len(result) == 2  # Only the 2 valid items
-            # assert result[0]['id'] == 1
-            # assert result[1]['id'] == 3
+        result = process_data(mixed_data)
+        
+        # Should only process the 2 valid items
+        assert len(result) == 2
+        assert result[0]['id'] == 1
+        assert result[1]['id'] == 3

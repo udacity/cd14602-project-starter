@@ -27,10 +27,8 @@ pytest test_log_formatter.py -v
 ```
 
 **Expected Output:**
-- **Original version tests**: All pass (showing it worked before)
-- **AI version timestamp tests**: Pass (timestamp feature works)  
-- **AI version workflow tests**: Pass (each one confirms a call the AI removed: file logging, monitoring, statistics)
-- **Comparison tests**: Clearly show the context gap pattern
+- 4 of the 7 tests fail on this code: each failing test's docstring names the problem it points at
+- The 3 that pass check the new timestamps and what the AI kept
 
 ### Step 3: Review the Code  
 1. **Review the AI-modified version** in `starter/log_formatter.py`
@@ -40,7 +38,10 @@ pytest test_log_formatter.py -v
    - What important features got removed in the process?
 3. **Document** your findings using the template below
 
-### Step 4: Run the Solution Tests
+### Step 4: Fix the Code, Then Compare With the Solution
+Use Claude Code to fix `starter/log_formatter.py` until all 7 tests pass.
+
+Then run the solution's tests, the same tests, to compare.
 In the Udacity workspace, the solution is in this lesson's `exercises` folder:
 ```bash
 cd ../../exercises/concept1-context-gap-pattern/solution
@@ -48,7 +49,7 @@ pytest test_log_formatter.py -v
 ```
 
 **Expected Output:**
-- All tests pass showing complete functionality
+- All 7 tests pass: the same tests your fixed starter passes
 - Timestamp formatting integrated without losing existing features
 - Notice how all original functionality is preserved
 

@@ -27,10 +27,8 @@ python -m pytest test_discount_calculator.py -v
 ```
 
 **Expected Output:**
-- **Original version tests**: All pass (simple code works)
-- **AI version functional tests**: All pass (complex code also works)  
-- **Complexity analysis tests**: Pass (revealing over-engineering metrics)
-- **Comparison tests**: Show identical functionality with vastly different complexity
+- 4 of the 10 tests fail on this code: each failing test's docstring names the problem it points at
+- The 6 that pass check the discount rates and logging, which the simpler version must keep
 
 ### Step 3: Review the Code
 1. **Review the AI-"improved" version** in `starter/discount_calculator.py`  
@@ -40,7 +38,13 @@ python -m pytest test_discount_calculator.py -v
    - How many design patterns are being used unnecessarily?
 3. **Document** your findings using the template below
 
-### Step 4: Run the Solution Tests
+### Step 4: Fix the Code, Then Compare With the Solution
+Use Claude Code to fix `starter/discount_calculator.py` until all 10 tests pass. The tests expect:
+- unknown customer types get the regular 5% rate, as in the original
+- each call logs a `logger.info()` message (through a module-level `logger`) that names the customer type
+- under 50 non-blank lines and no classes: the request was only to add logging
+
+Then run the solution's tests, the same tests, to compare.
 In the Udacity workspace, the solution is in this lesson's `exercises` folder:
 ```bash
 cd ../../exercises/concept3-over-engineering-pattern/solution
@@ -48,7 +52,7 @@ python -m pytest test_discount_calculator.py -v
 ```
 
 **Expected Output:**
-- Same functionality with much simpler implementation
+- All 10 tests pass: the same tests your fixed starter passes
 - Tests pass with equivalent behavior
 - Notice how simple code can be just as effective
 

@@ -24,9 +24,8 @@ pytest test_security_vulnerabilities.py -v
 ```
 
 **Expected Output:**
-- Basic functionality tests pass
-- Security tests reveal potential issues
-- Tests demonstrate various authentication patterns
+- 9 of the 10 tests fail on this code: each failing test's docstring names the problem it points at
+- The 1 that passes (a login for a user who doesn't exist) must keep passing
 
 ### Step 3: Security Review
 1. **Open** `starter/user_auth.py` and examine the security flaws
@@ -37,7 +36,14 @@ pytest test_security_vulnerabilities.py -v
    - Input validation (none!)
    - Error handling
 
-### Step 4: Run Security Tests on Secure Solution
+### Step 4: Fix the Code, Then Compare With the Solution
+Use Claude Code to fix `starter/user_auth.py` until all 10 tests pass. The tests expect:
+- `register_user(username, password)`, which stores a new user in the `users` table of `self.db_connection` and returns the new user's id
+- a hash of the password stored, never the password as typed
+- `login()` returning `None` for any failed login
+- session tokens of at least 32 characters from the `secrets` module, not `random`
+
+Then run the solution's tests, the same tests, to compare.
 In the Udacity workspace, the `solution` folder sits next to `starter`:
 ```bash
 cd ../solution
@@ -45,7 +51,7 @@ pytest test_secure_authentication.py -v
 ```
 
 **Expected Output:**
-- All security tests pass
+- All 10 tests pass: the same tests your fixed starter passes
 - SQL injection attempts are blocked
 - Passwords are stored as hashes
 - Input validation works correctly

@@ -1,187 +1,320 @@
-"""Tests for basic API error handling issues."""
+"""Tests for API error handling.
+
+These tests describe the fixed behaviour. Run them on the starter first: some fail, and each
+failing test's docstring says which problem it points at. Fix api_client.py until they all pass.
+Every test mocks requests, so none of them calls a real server.
+"""
+
+import json
 
 import pytest
+import requests
 from unittest.mock import patch, Mock
 from api_client import APIClient
 
 
-class TestBasicAPIOperations:
-    """Tests for basic API functionality."""
+def _response(status_code, json_data=None):
+    """A mocked requests.Response: status_code, ok, json(), text and raise_for_status() behave like the real one."""
+    data = {} if json_data is None else json_data
+    response = Mock()
+    response.status_code = status_code
+    response.ok = status_code < 400
+    response.json.return_value = data
+    response.text = json.dumps(data)
+    if status_code >= 400:
+        response.raise_for_status.side_effect = requests.exceptions.HTTPError(f"{status_code} Error", response=response)
+    else:
+        response.raise_for_status.return_value = None
+    return response
+
+
+@pytest.fixture(autouse=True)
+def no_real_requests(monkeypatch):
+    """The tests mock requests.get and requests.put. Anything else that would reach the network fails instead."""
+    def refuse(*args, **kwargs):
+        raise RuntimeError("A real HTTP request was attempted: call requests.get() / requests.put(), which these tests mock")
+    monkeypatch.setattr(requests.adapters.HTTPAdapter, "send", refuse)
+
+
+class TestImprovedAPIInitialization:
+    """Tests for improved API client initialization."""
     
-    def test_api_client_initialization(self):
-        """Test that API client can be initialized."""
+    def test_api_client_validates_base_url(self):
+        """Fails on the starter: no input validation: an empty base URL is accepted. Passes once fixed."""
+        with pytest.raises(ValueError, match="Base URL cannot be empty"):
+            APIClient("", "test-key")
+        
+        with pytest.raises(ValueError, match="Base URL cannot be empty"):
+            APIClient(None, "test-key")
+    
+    def test_api_client_validates_api_key(self):
+        """Fails on the starter: no input validation: an empty API key is accepted. Passes once fixed."""
+        with pytest.raises(ValueError, match="API key cannot be empty"):
+            APIClient("https://api.example.com", "")
+        
+        with pytest.raises(ValueError, match="API key cannot be empty"):
+            APIClient("https://api.example.com", None)
+    
+    def test_api_client_accepts_valid_parameters(self):
+        """Test that valid parameters are accepted."""
         client = APIClient("https://api.example.com", "test-key")
         assert client.base_url == "https://api.example.com"
         assert client.api_key == "test-key"
-    
-    @patch('api_client.requests.get')
-    def test_successful_request_works(self, mock_get):
-        """Test that successful requests work."""
-        # Mock successful response
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.text = '{"id": 123, "name": "John"}'
-        mock_get.return_value = mock_response
-        
-        client = APIClient("https://api.example.com", "test-key")
-        result = client.get_user_data(123)
-        
-        assert result is not None
-        assert result["id"] == 123
 
 
-class TestNetworkErrorHandling:
-    """Tests that show network error handling problems."""
+class TestImprovedNetworkErrorHandling:
+    """Tests for improved network error handling."""
     
     @patch('api_client.requests.get')
-    def test_network_timeout_crashes_program(self, mock_get):
-        """Test that network timeouts are not handled."""
+    def test_timeout_error_handled_gracefully(self, mock_get):
+        """Fails on the starter: no try/except, so the network error crashes the program. Passes once fixed."""
         import requests
         
         # Mock a timeout error
         mock_get.side_effect = requests.exceptions.Timeout("Request timed out")
         
         client = APIClient("https://api.example.com", "test-key")
+        result = client.get_user_data(123)
         
-        # This should crash due to unhandled timeout
-        with pytest.raises(requests.exceptions.Timeout):
-            client.get_user_data(123)
+        # Should return error info instead of crashing
+        assert "error" in result
+        assert "timed out" in result["error"]
     
     @patch('api_client.requests.get')
-    def test_connection_error_crashes_program(self, mock_get):
-        """Test that connection errors are not handled."""
+    def test_connection_error_handled_gracefully(self, mock_get):
+        """Fails on the starter: no try/except, so the network error crashes the program. Passes once fixed."""
         import requests
         
         # Mock a connection error
         mock_get.side_effect = requests.exceptions.ConnectionError("Failed to connect")
         
         client = APIClient("https://api.example.com", "test-key")
+        result = client.get_user_data(123)
         
-        # This should crash due to unhandled connection error
-        with pytest.raises(requests.exceptions.ConnectionError):
-            client.get_user_data(123)
-
-
-class TestHTTPStatusHandling:
-    """Tests that show HTTP status code handling problems."""
+        # Should return error info instead of crashing
+        assert "error" in result
+        assert "connect" in result["error"]
     
     @patch('api_client.requests.get')
-    def test_404_returns_none_without_info(self, mock_get):
-        """Test that 404 errors provide no useful information."""
+    def test_general_request_error_handled(self, mock_get):
+        """Fails on the starter: no try/except, so the network error crashes the program. Passes once fixed."""
+        import requests
+        
+        # Mock a general request error
+        mock_get.side_effect = requests.exceptions.RequestException("Something went wrong")
+        
+        client = APIClient("https://api.example.com", "test-key")
+        result = client.get_user_data(123)
+        
+        # Should return error info instead of crashing
+        assert "error" in result
+        assert "Request failed" in result["error"]
+
+
+class TestImprovedHTTPStatusHandling:
+    """Tests for improved HTTP status code handling."""
+    
+    @patch('api_client.requests.get')
+    def test_200_returns_json_data(self, mock_get):
+        """Test that successful requests return the user's data."""
+        # Mock successful response
+        mock_response = _response(200, {"id": 123, "name": "John"})
+        mock_get.return_value = mock_response
+        
+        client = APIClient("https://api.example.com", "test-key")
+        result = client.get_user_data(123)
+        
+        # Should return JSON data directly
+        assert result["id"] == 123
+        assert result["name"] == "John"
+    
+    @patch('api_client.requests.get')
+    def test_404_returns_helpful_error_message(self, mock_get):
+        """Fails on the starter: every non-200 response returns None, with no explanation. Passes once fixed."""
         # Mock 404 response
-        mock_response = Mock()
-        mock_response.status_code = 404
+        mock_response = _response(404)
         mock_get.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
         result = client.get_user_data(123)
         
-        # Problem: Returns None without explaining why
-        assert result is None
+        # Should return helpful error message
+        assert "error" in result
+        assert "not found" in result["error"].lower()
     
     @patch('api_client.requests.get')
-    def test_401_returns_none_without_info(self, mock_get):
-        """Test that 401 errors provide no useful information."""
+    def test_401_returns_helpful_error_message(self, mock_get):
+        """Fails on the starter: every non-200 response returns None, with no explanation. Passes once fixed."""
         # Mock 401 response
-        mock_response = Mock()
-        mock_response.status_code = 401
+        mock_response = _response(401)
         mock_get.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
         result = client.get_user_data(123)
         
-        # Problem: Returns None without explaining authentication failed
-        assert result is None
+        # Should return helpful error message about authentication
+        assert "error" in result
+        assert "unauthorized" in result["error"].lower()
+        assert "api key" in result["error"].lower()
     
     @patch('api_client.requests.get')
-    def test_500_returns_none_without_info(self, mock_get):
-        """Test that server errors provide no useful information."""
+    def test_500_returns_helpful_error_message(self, mock_get):
+        """Fails on the starter: every non-200 response returns None, with no explanation. Passes once fixed."""
         # Mock 500 response
-        mock_response = Mock()
-        mock_response.status_code = 500
+        mock_response = _response(500)
         mock_get.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
         result = client.get_user_data(123)
         
-        # Problem: Returns None without explaining server error
-        assert result is None
+        # Should return helpful error message about server issues
+        assert "error" in result
+        assert "server error" in result["error"].lower()
+    
+    @patch('api_client.requests.get')
+    def test_unknown_status_code_handled(self, mock_get):
+        """Fails on the starter: every non-200 response returns None, with no explanation. Passes once fixed."""
+        # Mock unknown status code
+        mock_response = _response(418)  # I'm a teapot
+        mock_get.return_value = mock_response
+        
+        client = APIClient("https://api.example.com", "test-key")
+        result = client.get_user_data(123)
+        
+        # Should return error with status code information
+        assert "error" in result
+        assert "418" in result["error"]
 
 
-class TestUpdateOperationProblems:
-    """Tests that show problems with update operations."""
+class TestImprovedUpdateOperations:
+    """Tests for improved update operations."""
     
     @patch('api_client.requests.put')
-    def test_update_returns_only_boolean(self, mock_put):
-        """Test that update only returns True/False without details."""
+    def test_successful_update_returns_detailed_result(self, mock_put):
+        """Fails on the starter: update_user() returns a bare True/False. Passes once fixed."""
         # Mock successful update
-        mock_response = Mock()
-        mock_response.status_code = 200
+        mock_response = _response(200)
         mock_put.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
         result = client.update_user(123, {"name": "Jane"})
         
-        # Problem: Only returns boolean, no details about what happened
-        assert result is True
+        # Should return structured result with success info
+        assert result["success"] is True
+        assert "message" in result
+        assert "updated" in result["message"].lower()
     
     @patch('api_client.requests.put')
-    def test_update_failure_gives_no_info(self, mock_put):
-        """Test that failed updates provide no error information."""
+    def test_failed_update_returns_error_details(self, mock_put):
+        """Fails on the starter: update_user() returns a bare True/False. Passes once fixed."""
         # Mock failed update
-        mock_response = Mock()
-        mock_response.status_code = 400
+        mock_response = _response(404)
         mock_put.return_value = mock_response
         
         client = APIClient("https://api.example.com", "test-key")
         result = client.update_user(123, {"name": "Jane"})
         
-        # Problem: Returns False but no info about why it failed
-        assert result is False
+        # Should return structured result with error details
+        assert result["success"] is False
+        assert "error" in result
+        assert "not found" in result["error"].lower()
     
     @patch('api_client.requests.put')
-    def test_update_network_error_crashes_program(self, mock_put):
-        """Test that network errors in updates are not handled."""
+    def test_update_network_error_handled_gracefully(self, mock_put):
+        """Fails on the starter: no try/except, so the network error crashes the program. Passes once fixed."""
         import requests
         
         # Mock network error during update
         mock_put.side_effect = requests.exceptions.Timeout("Update timed out")
         
         client = APIClient("https://api.example.com", "test-key")
+        result = client.update_user(123, {"name": "Jane"})
         
-        # This should crash due to unhandled timeout in update
-        with pytest.raises(requests.exceptions.Timeout):
-            client.update_user(123, {"name": "Jane"})
+        # Should return error info instead of crashing
+        assert result["success"] is False
+        assert "error" in result
+        assert "timed out" in result["error"]
 
 
-class TestInputValidationProblems:
-    """Tests that show missing input validation."""
-    
-    def test_no_validation_for_empty_base_url(self):
-        """Test that empty base URL is not validated."""
-        # Should validate but doesn't
-        client = APIClient("", "test-key")
-        # Will cause issues when making requests
-        assert client.base_url == ""
-    
-    def test_no_validation_for_empty_api_key(self):
-        """Test that empty API key is not validated."""
-        # Should validate but doesn't
-        client = APIClient("https://api.example.com", "")
-        # Will cause authorization issues
-        assert client.api_key == ""
+class TestImprovedInputValidation:
+    """Tests for improved input validation."""
     
     @patch('api_client.requests.get')
-    def test_no_validation_for_empty_user_id(self, mock_get):
-        """Test that empty user ID is not validated."""
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.text = '{}'
-        mock_get.return_value = mock_response
-        
+    def test_get_user_data_validates_user_id(self, mock_get):
+        """Fails on the starter: no input validation: an empty user ID is sent to the server. Passes once fixed."""
         client = APIClient("https://api.example.com", "test-key")
         
-        # Should validate user_id but doesn't
-        result = client.get_user_data("")  # Empty user ID
-        # This will make a malformed request
-        assert mock_get.called
+        # Should reject empty user_id
+        with pytest.raises(ValueError, match="User ID cannot be empty"):
+            client.get_user_data("")
+        
+        # Should reject None user_id
+        with pytest.raises(ValueError, match="User ID cannot be empty"):
+            client.get_user_data(None)
+    
+    @patch('api_client.requests.put')
+    def test_update_user_validates_user_id(self, mock_put):
+        """Fails on the starter: no input validation: an empty user ID is sent to the server. Passes once fixed."""
+        client = APIClient("https://api.example.com", "test-key")
+        
+        # Should reject empty user_id
+        with pytest.raises(ValueError, match="User ID cannot be empty"):
+            client.update_user("", {"name": "Jane"})
+        
+        # Should reject None user_id
+        with pytest.raises(ValueError, match="User ID cannot be empty"):
+            client.update_user(None, {"name": "Jane"})
+    
+    @patch('api_client.requests.put')
+    def test_update_user_validates_data_parameter(self, mock_put):
+        """Fails on the starter: no input validation: empty or non-dictionary data is sent to the server. Passes once fixed."""
+        client = APIClient("https://api.example.com", "test-key")
+        
+        # Should reject None data
+        with pytest.raises(ValueError, match="Data must be a non-empty dictionary"):
+            client.update_user(123, None)
+        
+        # Should reject empty data
+        with pytest.raises(ValueError, match="Data must be a non-empty dictionary"):
+            client.update_user(123, {})
+        
+        # Should reject non-dictionary data
+        with pytest.raises(ValueError, match="Data must be a non-empty dictionary"):
+            client.update_user(123, "not a dict")
+
+
+class TestImprovedContentHandling:
+    """Tests for improved content handling."""
+    
+    @patch('api_client.requests.put')
+    def test_update_sends_proper_json_content_type(self, mock_put):
+        """Fails on the starter: the data is sent as a string with no JSON Content-Type. Passes once fixed."""
+        # Mock successful response
+        mock_response = _response(200)
+        mock_put.return_value = mock_response
+        
+        client = APIClient("https://api.example.com", "test-key")
+        client.update_user(123, {"name": "Jane"})
+        
+        # Should have called with proper headers
+        mock_put.assert_called_once()
+        call_args = mock_put.call_args
+        headers = call_args[1]["headers"]
+        assert headers["Content-Type"] == "application/json"
+    
+    @patch('api_client.requests.put')
+    def test_update_sends_json_data_properly(self, mock_put):
+        """Fails on the starter: the data is sent as a string, not with json=. Passes once fixed."""
+        # Mock successful response
+        mock_response = _response(200)
+        mock_put.return_value = mock_response
+        
+        client = APIClient("https://api.example.com", "test-key")
+        test_data = {"name": "Jane", "email": "jane@example.com"}
+        client.update_user(123, test_data)
+        
+        # Should have used json parameter instead of data parameter
+        mock_put.assert_called_once()
+        call_args = mock_put.call_args
+        assert "json" in call_args[1]
+        assert call_args[1]["json"] == test_data

@@ -1,4 +1,8 @@
-"""Tests for simple database security issues."""
+"""Tests for secure database operations.
+
+These tests describe the fixed behaviour. Run them on the starter first: some fail, and each
+failing test's docstring says which problem it points at. Fix database_manager.py until they all pass.
+"""
 
 import pytest
 import sqlite3
@@ -7,44 +11,39 @@ import tempfile
 from database_manager import DatabaseManager
 
 
-class TestBasicDatabaseOperations:
-    """Tests for basic database functionality."""
+@pytest.fixture
+def users_db(tmp_path):
+    """A temporary database with an empty users table."""
+    path = tmp_path / "users.db"
+    conn = sqlite3.connect(path)
+    conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)")
+    conn.commit()
+    conn.close()
+    return str(path)
+
+
+class TestSecureDatabaseInitialization:
+    """Tests for secure database initialization."""
     
-    def test_database_manager_initialization(self):
-        """Test that database manager can be initialized."""
-        db = DatabaseManager("test.db")
-        assert db.db_path == "test.db"
-    
-    def test_create_and_find_user(self):
-        """Test basic user creation and retrieval."""
-        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
-            db_path = tmp.name
+    def test_database_manager_validates_path(self):
+        """Fails on the starter: no input validation: an empty path is accepted. Passes once fixed."""
+        with pytest.raises(ValueError, match="Database path cannot be empty"):
+            DatabaseManager("")
         
-        try:
-            # Setup test database
-            conn = sqlite3.connect(db_path)
-            conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)")
-            conn.close()
-            
-            # Test operations
-            db = DatabaseManager(db_path)
-            user_id = db.create_user("John Doe", "john@test.com")
-            user = db.get_user_by_email("john@test.com")
-            
-            assert user_id is not None
-            assert user is not None
-            assert user[1] == "John Doe"  # name column
-            assert user[2] == "john@test.com"  # email column
-        finally:
-            if os.path.exists(db_path):
-                os.remove(db_path)
-
-
-class TestSQLInjectionVulnerabilities:
-    """Tests that demonstrate SQL injection vulnerabilities."""
+        with pytest.raises(ValueError, match="Database path cannot be empty"):
+            DatabaseManager(None)
     
-    def test_sql_injection_in_get_user_by_email(self):
-        """Test that SQL injection works in get_user_by_email."""
+    def test_database_manager_accepts_valid_path(self):
+        """Test that valid paths are accepted."""
+        db = DatabaseManager("valid_path.db")
+        assert db.db_path == "valid_path.db"
+
+
+class TestSQLInjectionPrevention:
+    """Tests that SQL injection attacks are blocked."""
+    
+    def test_get_user_by_email_blocks_sql_injection(self):
+        """Fails on the starter: f-string SQL, so ' OR '1'='1 returns a user. Passes once fixed."""
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
             db_path = tmp.name
         
@@ -58,18 +57,18 @@ class TestSQLInjectionVulnerabilities:
             
             db = DatabaseManager(db_path)
             
-            # SQL injection attack - this should NOT work but will
+            # SQL injection attempt should be blocked
             malicious_email = "' OR '1'='1"
             user = db.get_user_by_email(malicious_email)
             
-            # Vulnerability: SQL injection succeeds and returns a user
-            assert user is not None, "SQL injection vulnerability allows unauthorized access"
+            # Should return None (not found) instead of bypassing security
+            assert user is None, "SQL injection should be blocked by parameterized queries"
         finally:
             if os.path.exists(db_path):
                 os.remove(db_path)
     
-    def test_sql_injection_in_create_user(self):
-        """Test that SQL injection can manipulate create_user."""
+    def test_create_user_blocks_sql_injection(self):
+        """Fails on the starter: f-string SQL, so the quote in the input breaks or rewrites the query. Passes once fixed."""
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
             db_path = tmp.name
         
@@ -81,106 +80,192 @@ class TestSQLInjectionVulnerabilities:
             
             db = DatabaseManager(db_path)
             
-            # SQL injection in name parameter - includes extra SQL
-            malicious_name = "John'); INSERT INTO users (name, email) VALUES ('Hacker', 'hack@evil.com"
+            # SQL injection attempt in name parameter
+            malicious_name = "John'); DROP TABLE users; --"
             
-            # This may create extra records due to SQL injection
-            try:
-                db.create_user(malicious_name, "test@email.com")
-            except sqlite3.Error:
-                # Even if it fails, it shows the vulnerability exists
-                pass
+            # Should handle injection safely without executing it
+            user_id = db.create_user(malicious_name, "test@email.com")
+            assert user_id is not None
             
-            # Check if injection had any effect
+            # Verify table still exists and data is stored safely
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM users")
-            count = cursor.fetchone()[0]
+            cursor.execute("SELECT name FROM users WHERE id = ?", (user_id,))
+            result = cursor.fetchone()
             conn.close()
             
-            # If more than 1 user was created, injection may have worked
-            if count > 1:
-                assert True, "SQL injection vulnerability may have created extra records"
+            # The malicious string should be stored as data, not executed as SQL
+            assert result[0] == malicious_name
         finally:
             if os.path.exists(db_path):
                 os.remove(db_path)
     
-    def test_sql_injection_in_update_user_email(self):
-        """Test that SQL injection works in update operations."""
+    def test_update_user_email_blocks_injection(self):
+        """Fails on the starter: f-string SQL, so the quote in the input breaks or rewrites the query. Passes once fixed."""
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
             db_path = tmp.name
         
         try:
-            # Setup test database with multiple users
+            # Setup test database with user
             conn = sqlite3.connect(db_path)
             conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)")
             conn.execute("INSERT INTO users (name, email) VALUES ('John', 'john@test.com')")
-            conn.execute("INSERT INTO users (name, email) VALUES ('Jane', 'jane@test.com')")
             conn.commit()
             conn.close()
             
             db = DatabaseManager(db_path)
             
-            # Simple SQL injection - just update with a valid email for now
-            # The vulnerability is in the string concatenation, not the payload complexity
-            try:
-                db.update_user_email(1, "newemail@test.com")
-                # If this works, the function is vulnerable to injection
-                # (even if we don't demonstrate a complex attack)
-            except Exception:
-                # If it fails, that also demonstrates poor error handling
-                pass
+            # SQL injection attempt in email parameter
+            malicious_email = "hacker@evil.com' WHERE '1'='1"
             
-            # The vulnerability is demonstrated by the fact that string concatenation
-            # is used instead of parameterized queries - this is the issue
-            assert True, "Update function uses string concatenation - vulnerable to SQL injection"
+            # Should update safely without executing injection
+            rows_affected = db.update_user_email(1, malicious_email)
+            assert rows_affected == 1
+            
+            # Verify only the intended record was updated with the value as data
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT email FROM users WHERE id = 1")
+            result = cursor.fetchone()
+            conn.close()
+            
+            # The malicious string should be stored as data
+            assert result[0] == malicious_email
         finally:
             if os.path.exists(db_path):
                 os.remove(db_path)
 
 
 class TestInputValidation:
-    """Tests that show missing input validation."""
+    """Tests for proper input validation."""
     
-    def test_no_validation_for_empty_email(self):
-        """Test that empty email is not validated."""
-        db = DatabaseManager("test.db")
+    def test_get_user_by_email_validates_input(self, users_db):
+        """Fails on the starter: no input validation: None, "" and 123 go straight into the query. Passes once fixed."""
+        db = DatabaseManager(users_db)
         
-        # Should validate email but doesn't - will create malformed query
-        with pytest.raises((sqlite3.Error, TypeError)):
+        # Should reject None email
+        with pytest.raises(ValueError, match="Email must be a non-empty string"):
+            db.get_user_by_email(None)
+        
+        # Should reject empty email
+        with pytest.raises(ValueError, match="Email must be a non-empty string"):
             db.get_user_by_email("")
-    
-    def test_no_validation_for_none_values(self):
-        """Test that None values are not validated."""
-        db = DatabaseManager("test.db")
         
-        # Should validate parameters but doesn't
-        with pytest.raises((sqlite3.Error, TypeError)):
-            db.create_user(None, "test@email.com")
+        # Should reject non-string email
+        with pytest.raises(ValueError, match="Email must be a non-empty string"):
+            db.get_user_by_email(123)
     
-    def test_no_validation_for_user_id_type(self):
-        """Test that user_id type is not validated."""
-        db = DatabaseManager("test.db")
+    def test_create_user_validates_input(self, users_db):
+        """Fails on the starter: no input validation: empty or non-string names and emails are stored. Passes once fixed."""
+        db = DatabaseManager(users_db)
         
-        # Should validate user_id is numeric but doesn't
-        with pytest.raises((sqlite3.Error, TypeError)):
+        # Should reject None name
+        with pytest.raises(ValueError, match="Name must be a non-empty string"):
+            db.create_user(None, "email@test.com")
+        
+        # Should reject empty name
+        with pytest.raises(ValueError, match="Name must be a non-empty string"):
+            db.create_user("", "email@test.com")
+        
+        # Should reject None email
+        with pytest.raises(ValueError, match="Email must be a non-empty string"):
+            db.create_user("John", None)
+        
+        # Should reject non-string parameters
+        with pytest.raises(ValueError, match="Name must be a non-empty string"):
+            db.create_user(123, "email@test.com")
+    
+    def test_update_user_email_validates_input(self, users_db):
+        """Fails on the starter: no input validation: any user ID or email goes straight into the query. Passes once fixed."""
+        db = DatabaseManager(users_db)
+        
+        # Should reject non-integer user_id
+        with pytest.raises(ValueError, match="User ID must be a positive integer"):
             db.update_user_email("not_a_number", "new@email.com")
+        
+        # Should reject negative user_id
+        with pytest.raises(ValueError, match="User ID must be a positive integer"):
+            db.update_user_email(-1, "new@email.com")
+        
+        # Should reject None user_id
+        with pytest.raises(ValueError, match="User ID must be a positive integer"):
+            db.update_user_email(None, "new@email.com")
+        
+        # Should reject invalid email
+        with pytest.raises(ValueError, match="Email must be a non-empty string"):
+            db.update_user_email(1, "")
 
 
-class TestSimpleErrorHandling:
-    """Tests that show basic error handling issues."""
+class TestSecureResourceManagement:
+    """Tests for proper resource management."""
     
-    def test_database_connection_errors_not_handled(self):
-        """Test that database connection errors are not handled."""
-        # Try to connect to non-existent database directory
+    def test_connections_are_closed_properly(self):
+        """Test that database connections are closed properly."""
+        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+            db_path = tmp.name
+        
+        try:
+            # Setup test database
+            conn = sqlite3.connect(db_path)
+            conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)")
+            conn.close()
+            
+            db = DatabaseManager(db_path)
+            
+            # Perform operations that should close connections properly
+            user_id = db.create_user("John", "john@test.com")
+            user = db.get_user_by_email("john@test.com")
+            db.update_user_email(user_id, "newemail@test.com")
+            
+            # All operations should complete successfully with proper cleanup
+            assert user is not None
+        finally:
+            if os.path.exists(db_path):
+                os.remove(db_path)
+    
+    def test_database_operations_are_atomic(self):
+        """Test that database operations are properly committed."""
+        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+            db_path = tmp.name
+        
+        try:
+            # Setup test database
+            conn = sqlite3.connect(db_path)
+            conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)")
+            conn.close()
+            
+            db = DatabaseManager(db_path)
+            
+            # Create user and verify it's committed
+            user_id = db.create_user("John", "john@test.com")
+            
+            # Open new connection to verify data was committed
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM users")
+            count = cursor.fetchone()[0]
+            conn.close()
+            
+            assert count == 1, "User creation should be committed to database"
+        finally:
+            if os.path.exists(db_path):
+                os.remove(db_path)
+
+
+class TestErrorHandling:
+    """Tests for improved error handling."""
+    
+    def test_handles_nonexistent_database_directory(self):
+        """Test that error handling works for invalid database paths."""
+        # Constructor should still work
         db = DatabaseManager("/nonexistent/directory/test.db")
         
-        # Should handle connection errors but doesn't
+        # Operations should raise clear errors
         with pytest.raises(sqlite3.Error):
             db.get_user_by_email("test@email.com")
     
-    def test_table_not_found_errors_not_handled(self):
-        """Test that missing table errors are not handled."""
+    def test_handles_missing_table_gracefully(self):
+        """Test that missing table errors are handled."""
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
             db_path = tmp.name
         
@@ -191,9 +276,79 @@ class TestSimpleErrorHandling:
             
             db = DatabaseManager(db_path)
             
-            # Should handle missing table gracefully but doesn't
-            with pytest.raises(sqlite3.OperationalError):
+            # Should raise clear error for missing table
+            with pytest.raises(sqlite3.OperationalError, match="no such table"):
                 db.get_user_by_email("test@email.com")
+        finally:
+            if os.path.exists(db_path):
+                os.remove(db_path)
+
+
+class TestParameterizedQueries:
+    """Tests that verify parameterized queries are working."""
+    
+    def test_parameterized_query_handles_special_characters(self):
+        """Fails on the starter: f-string SQL, so a name like O'Brien breaks the query. Passes once fixed."""
+        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+            db_path = tmp.name
+        
+        try:
+            # Setup test database
+            conn = sqlite3.connect(db_path)
+            conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)")
+            conn.close()
+            
+            db = DatabaseManager(db_path)
+            
+            # Create user with special characters that could cause SQL issues
+            special_name = "O'Brien-Smith & Associates"
+            special_email = "test+user@domain-name.co.uk"
+            
+            user_id = db.create_user(special_name, special_email)
+            user = db.get_user_by_email(special_email)
+            
+            # Should handle special characters safely
+            assert user is not None
+            assert user[1] == special_name
+            assert user[2] == special_email
+        finally:
+            if os.path.exists(db_path):
+                os.remove(db_path)
+    
+    def test_parameterized_query_prevents_data_corruption(self):
+        """Fails on the starter: f-string SQL, so input can add a second statement. Passes once fixed."""
+        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+            db_path = tmp.name
+        
+        try:
+            # Setup test database with multiple users
+            conn = sqlite3.connect(db_path)
+            conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)")
+            conn.execute("INSERT INTO users (name, email) VALUES ('Alice', 'alice@test.com')")
+            conn.execute("INSERT INTO users (name, email) VALUES ('Bob', 'bob@test.com')")
+            conn.commit()
+            conn.close()
+            
+            db = DatabaseManager(db_path)
+            
+            # Update one user with potentially dangerous input
+            dangerous_email = "new@email.com'; UPDATE users SET name='HACKED"
+            db.update_user_email(1, dangerous_email)
+            
+            # Verify only the intended record was affected
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT name, email FROM users ORDER BY id")
+            results = cursor.fetchall()
+            conn.close()
+            
+            # First user should have the dangerous string as data (not executed as SQL)
+            assert results[0][0] == "Alice"  # Name unchanged
+            assert results[0][1] == dangerous_email  # Email updated with dangerous string as data
+            
+            # Second user should be completely unaffected
+            assert results[1][0] == "Bob"
+            assert results[1][1] == "bob@test.com"
         finally:
             if os.path.exists(db_path):
                 os.remove(db_path)

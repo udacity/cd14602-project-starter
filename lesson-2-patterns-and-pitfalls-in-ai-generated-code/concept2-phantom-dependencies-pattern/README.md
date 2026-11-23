@@ -27,10 +27,7 @@ python -m pytest test_name_formatter.py -v
 ```
 
 **Expected Output:**
-- **Original version tests**: All pass (real dependencies work)
-- **AI version import tests**: Pass (each one confirms the phantom libraries can't be imported)
-- **Source code analysis tests**: Pass (detecting phantom patterns in code)
-- **Comparison tests**: Show how AI broke working code with fake libraries
+- All 5 tests fail on this code: it imports libraries that don't exist, and each failing test's docstring names the problem it points at
 
 ### Step 3: Review the Code
 1. **Review the AI-"improved" version** in `starter/name_formatter.py`
@@ -40,7 +37,10 @@ python -m pytest test_name_formatter.py -v
    - How did AI make the simple, working code unusable?
 3. **Document** your findings using the template below
 
-### Step 4: Run the Solution Tests
+### Step 4: Fix the Code, Then Compare With the Solution
+Use Claude Code to fix `starter/name_formatter.py` until all 5 tests pass, using only real libraries and keeping what the original version does (`starter/original_name_formatter.py` passes all 5).
+
+Then run the solution's tests, the same tests, to compare.
 In the Udacity workspace, the solution is in this lesson's `exercises` folder:
 ```bash
 cd ../../exercises/concept2-phantom-dependencies-pattern/solution
@@ -48,7 +48,7 @@ python -m pytest test_name_formatter.py -v
 ```
 
 **Expected Output:**
-- All tests pass with real, verified dependencies
+- All 5 tests pass: the same tests your fixed starter passes
 - Same functionality using legitimate libraries
 - Notice how real APIs are properly used
 
