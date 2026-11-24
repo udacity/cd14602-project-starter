@@ -388,7 +388,7 @@ See `docs/IMPLEMENTATION_GUIDE.md` lines 177-299 for complete implementation exa
 
 All interfaces use:
 - ✅ Full type hints (`typing` module)
-- ✅ Python 3.8+ type syntax
+- ✅ Python 3.10+ type syntax
 - ✅ Return type annotations
 - ✅ Parameter type annotations
 - ✅ Generic types (`List[Transaction]`, `Dict[str, Any]`)

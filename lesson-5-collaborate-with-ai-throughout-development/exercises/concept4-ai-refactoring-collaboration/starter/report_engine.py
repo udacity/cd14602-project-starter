@@ -35,11 +35,13 @@ class ReportEngine:
             mode: ReportMode strategy for processing transactions
 
         Returns:
-            Dictionary containing report data from the mode's processing
+            Whatever the mode's process_transactions returns
+            (the package's report strategies return the report text)
 
         Raises:
-            FileNotFoundError: If file doesn't exist (propagated from loader)
-            ValueError: If data is invalid (propagated from loader or mode)
+            Any exception the loader or the mode raises, unchanged
+            (the package's CSVTransactionLoader raises DataLoadError
+            and ValidationError)
         """
         transactions = self.loader.load(filepath)
         report_data = mode.process_transactions(transactions)

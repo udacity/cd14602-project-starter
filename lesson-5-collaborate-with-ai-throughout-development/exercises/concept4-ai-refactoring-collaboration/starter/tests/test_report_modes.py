@@ -36,29 +36,36 @@ class TestCategorySummaryReport(unittest.TestCase):
 
     def test_process_transactions_groups_by_category(self):
         """Test that transactions are grouped by category correctly."""
-        # TODO: Implement test
-        # Verify Food total is $77.50, Transport is $120.00
-        pass
+        output = self.report.process_transactions(self.sample_transactions)
+
+        self.assertIsInstance(output, str)
+        self.assertIn('Food', output)
+        self.assertIn('77.50', output)       # 42.50 + 35.00, one row for Food
+        self.assertIn('120.00', output)
+        self.assertIn('197.50', output)      # grand total
 
     def test_process_empty_transactions_raises_error(self):
         """Test that empty transaction list raises EmptyDatasetError."""
-        # TODO: Implement test
-        pass
+        with self.assertRaises(EmptyDatasetError):
+            self.report.process_transactions([])
 
     def test_get_report_name(self):
         """Test that report name is returned correctly."""
-        # TODO: Implement test
-        pass
+        self.assertEqual(self.report.get_report_name(), 'Category Summary')
 
     def test_output_format_has_headers(self):
         """Test that output includes proper headers."""
-        # TODO: Implement test
-        pass
+        output = self.report.process_transactions(self.sample_transactions)
+
+        self.assertIn('Category Summary', output)
+        self.assertIn('TOTAL', output.upper())
 
     def test_categories_sorted_by_total(self):
         """Test that categories are sorted by total amount descending."""
-        # TODO: Implement test
-        pass
+        output = self.report.process_transactions(self.sample_transactions)
+
+        # Transport (120.00) comes before Food (77.50)
+        self.assertLess(output.index('Transport'), output.index('Food'))
 
 
 class TestMonthlyTotalsReport(unittest.TestCase):
@@ -75,19 +82,25 @@ class TestMonthlyTotalsReport(unittest.TestCase):
 
     def test_process_transactions_groups_by_month(self):
         """Test that transactions are grouped by month correctly."""
-        # TODO: Implement test
-        # Verify Jan total is $150.00, Feb is $200.00
-        pass
+        output = self.report.process_transactions(self.sample_transactions)
+
+        self.assertIsInstance(output, str)
+        self.assertIn('2025-01', output)
+        self.assertIn('150.00', output)      # 100.00 + 50.00, one row for January
+        self.assertIn('2025-02', output)
+        self.assertIn('200.00', output)
+        self.assertIn('350.00', output)      # grand total
 
     def test_process_empty_transactions_raises_error(self):
         """Test that empty transaction list raises EmptyDatasetError."""
-        # TODO: Implement test
-        pass
+        with self.assertRaises(EmptyDatasetError):
+            self.report.process_transactions([])
 
     def test_months_sorted_chronologically(self):
         """Test that months are sorted in chronological order."""
-        # TODO: Implement test
-        pass
+        output = self.report.process_transactions(self.sample_transactions)
+
+        self.assertLess(output.index('2025-01'), output.index('2025-02'))
 
 
 class TestTopExpensesReport(unittest.TestCase):
@@ -105,29 +118,37 @@ class TestTopExpensesReport(unittest.TestCase):
 
     def test_process_transactions_shows_top_n(self):
         """Test that only top N expenses are shown."""
-        # TODO: Implement test
-        # Verify only 3 transactions shown: $200, $100, $75
-        pass
+        output = self.report.process_transactions(self.sample_transactions)
+
+        self.assertIn('Expense 2', output)
+        self.assertIn('Expense 3', output)
+        self.assertIn('Expense 4', output)
+        self.assertNotIn('Expense 1', output)   # the smallest of four, with top_n=3
 
     def test_top_expenses_sorted_by_amount(self):
         """Test that expenses are sorted by amount descending."""
-        # TODO: Implement test
-        pass
+        output = self.report.process_transactions(self.sample_transactions)
+
+        self.assertLess(output.index('Expense 2'), output.index('Expense 3'))
+        self.assertLess(output.index('Expense 3'), output.index('Expense 4'))
 
     def test_process_fewer_than_n_transactions(self):
         """Test handling when there are fewer transactions than top_n."""
-        # TODO: Implement test with only 2 transactions for top_n=3
-        pass
+        output = self.report.process_transactions(self.sample_transactions[:2])
+
+        self.assertIn('Expense 1', output)
+        self.assertIn('Expense 2', output)
 
     def test_invalid_top_n_raises_error(self):
         """Test that invalid top_n values raise ValueError."""
-        # TODO: Implement test for top_n=0, top_n=-1
-        pass
+        with self.assertRaises(ValueError):
+            TopExpensesReport(top_n=0)
+        with self.assertRaises(ValueError):
+            TopExpensesReport(top_n=-1)
 
     def test_get_report_name_includes_n(self):
         """Test that report name includes the top_n value."""
-        # TODO: Implement test
-        pass
+        self.assertIn('5', TopExpensesReport(top_n=5).get_report_name())
 
 
 if __name__ == '__main__':

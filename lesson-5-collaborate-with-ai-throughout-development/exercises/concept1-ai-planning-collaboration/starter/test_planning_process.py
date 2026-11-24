@@ -47,7 +47,7 @@ class TestPlanningArtifacts:
         project_structure.txt not found. Create this file with your directory layout.
 
         Hint: Show directory structure with comments explaining each part.
-        Include: main.py, utils/, tests/, data/
+        Include: main.py, your code package (e.g. expense_tracker/), tests/, examples/ or data/
         """
 
 
@@ -112,7 +112,7 @@ class TestArchitecturePlanContent:
         Example: Include section like "## Module Design" describing:
         - TransactionLoader: Responsible for loading and validating CSV data
         - ReportMode: Responsible for processing transactions into reports
-        - ReportEngine: Responsible for orchestrating the report generation
+        - ExpenseTrackerCLI: Responsible for orchestrating the report generation
         """
 
 
@@ -153,7 +153,7 @@ class TestInterfaceDefinitions:
 
         class TransactionLoader(ABC):
             @abstractmethod
-            def load(self, filepath: str) -> List[Dict[str, Any]]:
+            def load(self, source: str) -> List[Transaction]:
                 pass
         """
 
@@ -202,20 +202,20 @@ class TestProjectStructure:
         # Check for main entry point
         has_main = 'main.py' in structure_content.lower()
 
-        # Check for code organization
-        has_utils = 'utils/' in structure_content.lower() or 'utils\\' in structure_content or 'src/' in structure_content.lower()
+        # Check for code organization (a package folder, or utils/ or src/)
+        has_utils = any(d in structure_content.lower() for d in ('expense_tracker/', 'utils/', 'src/')) or 'utils\\' in structure_content
 
         # Check for tests
         has_tests = 'tests/' in structure_content.lower() or 'test/' in structure_content.lower()
 
-        # Check for data
-        has_data = 'data/' in structure_content.lower()
+        # Check for data (data/ or examples/)
+        has_data = 'data/' in structure_content.lower() or 'examples/' in structure_content.lower()
 
         missing = []
         if not has_main: missing.append("main.py (entry point)")
-        if not has_utils: missing.append("utils/ or src/ (code directory)")
+        if not has_utils: missing.append("expense_tracker/, utils/ or src/ (code directory)")
         if not has_tests: missing.append("tests/ (test directory)")
-        if not has_data: missing.append("data/ (data directory)")
+        if not has_data: missing.append("data/ or examples/ (data directory)")
 
         assert len(missing) == 0, f"""
         Project structure is missing: {', '.join(missing)}
@@ -223,11 +223,11 @@ class TestProjectStructure:
         Example structure:
         expense-tracker/
         ├── main.py
-        ├── utils/
-        │   ├── transaction_loader.py
-        │   └── report_modes.py
+        ├── expense_tracker/
+        │   ├── data/transaction_loader.py
+        │   └── reports/report_mode.py
         ├── tests/
-        └── data/
+        └── examples/
         """
 
     def test_structure_has_comments(self, structure_content):
@@ -238,8 +238,9 @@ class TestProjectStructure:
 
         Example:
         ├── main.py                    # CLI entry point
-        ├── utils/
-        │   ├── transaction_loader.py  # CSV loading and validation
+        ├── expense_tracker/
+        │   ├── data/
+        │   │   └── transaction_loader.py  # CSV loading and validation
         """
 
 

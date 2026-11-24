@@ -364,10 +364,7 @@ from expense_tracker.presentation.formatters import format_currency, format_tabl
 ### External Usage
 
 ```python
-# Run as module
-python -m expense_tracker.cli
-
-# Or via entry point
+# Run via the entry point
 python main.py expenses.csv
 ```
 

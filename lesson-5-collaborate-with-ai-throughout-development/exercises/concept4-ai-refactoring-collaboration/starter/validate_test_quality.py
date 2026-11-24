@@ -17,18 +17,19 @@ except ImportError:
     test_report_engine = None
 
 
+def test_file_exists_and_imports():
+    """test_report_engine.py should exist and be importable."""
+    assert TEST_MODULE_EXISTS, """
+    test_report_engine.py not found or has import errors.
+
+    Create this file with your tests for ReportEngine.
+    See test_report_engine_EXAMPLES.py for patterns to follow.
+    """
+
+
 @pytest.mark.skipif(not TEST_MODULE_EXISTS, reason="test_report_engine.py not created yet - see test_report_engine_EXAMPLES.py for guidance")
 class TestTestSuiteStructure:
     """Validate that test suite has proper structure and coverage."""
-
-    def test_file_exists_and_imports(self):
-        """test_report_engine.py should exist and be importable."""
-        assert TEST_MODULE_EXISTS, """
-        test_report_engine.py not found or has import errors.
-
-        Create this file with your tests for ReportEngine.
-        See test_report_engine_EXAMPLES.py for patterns to follow.
-        """
 
     def test_has_test_classes(self):
         """Should organize tests into classes.
@@ -173,7 +174,8 @@ class TestTestCoverage:
                         if any(pattern in t.lower() for pattern in success_patterns)]
 
         assert len(success_tests) >= 3, f"""
-        Found {len(success_tests)} happy path tests. Include at least 3 tests for:
+        Found {len(success_tests)} happy path tests (tests in Test... classes whose names contain
+        'success', 'generate', 'valid', 'happy' or 'work'). Include at least 3 tests for:
         - Successful report generation
         - Correct loader call
         - Correct mode call

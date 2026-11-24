@@ -24,7 +24,7 @@ Review for:
    - Duplicated formatting logic
 
 2. Magic Values
-   - Hard-coded strings (especially color codes)
+   - Hard-coded strings (titles, separators)
    - Hard-coded numbers
    - Repeated literals
 
@@ -64,9 +64,9 @@ Create a new version of the cli interface on a new versioned file with refactori
 
 
 <refactorings_to_apply>
-1. Extract all color codes into class constants (LOW risk)
-   - Create Color class or constants: RESET, RED, GREEN, BLUE, YELLOW
-   - Replace all "\033[..." literals with named constants
+1. Extract magic values into class constants (LOW risk)
+   - Widths (50, 20, 10), separator characters (=, -, !) and report titles
+   - Replace the literals with named constants
 
 2. Create helper method for error formatting (LOW risk)
    - Extract repeated error formatting into _format_error_message(msg: str) -> str
@@ -108,7 +108,7 @@ Create refactoring_notes.md documenting the changes made
 </task>
 
 <refactorings_completed>
-1. Extracted color codes to constants
+1. Extracted magic values (widths, separators, titles) to constants
 2. Created _format_error_message helper
 3. Added complete type hints
 4. Split display_report into smaller methods
