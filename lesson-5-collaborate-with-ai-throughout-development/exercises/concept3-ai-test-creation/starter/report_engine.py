@@ -6,7 +6,7 @@ and report processing. It provides a simple interface that hides the complexity
 of working with multiple components (loaders and report strategies).
 """
 
-from typing import Dict, Any
+from typing import Any
 
 
 class ReportEngine:
@@ -21,14 +21,14 @@ class ReportEngine:
         """
         self.loader = loader
 
-    def generate_report(self, filepath: str, mode) -> Dict[str, Any]:
+    def generate_report(self, filepath: str, mode) -> Any:
         """
         Generate report from file using specified mode.
 
         Workflow:
         1. Load transactions from file using loader
         2. Process transactions using mode strategy
-        3. Return formatted report data
+        3. Return the mode's result
 
         Args:
             filepath: Path to the transaction data file

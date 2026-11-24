@@ -15,6 +15,7 @@ refactor it, and document it, with an AI assistant and with every engineering de
 
 Each concept folder holds a `starter/` (where you work), a `solution/` (to compare with when you finish), a
 `README.md` (the commands and the results to expect) and a `PROMPTS.md` (the solution video's prompts, matched to the exercise's files).
+In the Udacity workspace, the `solution` folder sits next to `starter`.
 The steps for each exercise are on its Exercise page in the classroom.
 
 ## Prerequisites

@@ -11,13 +11,15 @@ from pathlib import Path
 import ast
 import re
 
+HERE = Path(__file__).resolve().parent  # the planning files sit next to this test
+
 
 class TestPlanningArtifacts:
     """Validate that all required planning artifacts exist."""
 
     def test_architecture_plan_exists(self):
         """Architecture plan document must exist."""
-        plan_file = Path("architecture_plan.md")
+        plan_file = (HERE / "architecture_plan.md")
         assert plan_file.exists(), """
         architecture_plan.md not found. Create this file documenting your architectural decisions.
 
@@ -30,7 +32,7 @@ class TestPlanningArtifacts:
 
     def test_interfaces_file_exists(self):
         """Interfaces Python file must exist."""
-        interfaces_file = Path("interfaces.py")
+        interfaces_file = (HERE / "interfaces.py")
         assert interfaces_file.exists(), """
         interfaces.py not found. Create this file with your interface definitions.
 
@@ -42,7 +44,7 @@ class TestPlanningArtifacts:
 
     def test_project_structure_exists(self):
         """Project structure file must exist."""
-        structure_file = Path("project_structure.txt")
+        structure_file = (HERE / "project_structure.txt")
         assert structure_file.exists(), """
         project_structure.txt not found. Create this file with your directory layout.
 
@@ -57,7 +59,7 @@ class TestArchitecturePlanContent:
     @pytest.fixture
     def plan_content(self):
         """Load architecture plan content."""
-        plan_file = Path("architecture_plan.md")
+        plan_file = (HERE / "architecture_plan.md")
         if not plan_file.exists():
             pytest.skip("architecture_plan.md not found")
         return plan_file.read_text()
@@ -122,7 +124,7 @@ class TestInterfaceDefinitions:
     @pytest.fixture
     def interfaces_module(self):
         """Load and parse interfaces.py."""
-        interfaces_file = Path("interfaces.py")
+        interfaces_file = (HERE / "interfaces.py")
         if not interfaces_file.exists():
             pytest.skip("interfaces.py not found")
 
@@ -137,13 +139,25 @@ class TestInterfaceDefinitions:
         """Should use Protocol or ABC for interface definitions."""
         has_protocol = False
         has_abc = False
+        imported_modules = set()
+        attributes_used = set()
 
         for node in ast.walk(interfaces_module):
             if isinstance(node, ast.ImportFrom):
                 if node.module == 'typing' and any(alias.name == 'Protocol' for alias in node.names):
                     has_protocol = True
-                if node.module == 'abc' and any(alias.name in ['ABC', 'abstractmethod'] for alias in node.names):
+                if node.module == 'abc' and any(alias.name in ['ABC', 'ABCMeta', 'abstractmethod'] for alias in node.names):
                     has_abc = True
+            elif isinstance(node, ast.Import):
+                imported_modules.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+                attributes_used.add(f"{node.value.id}.{node.attr}")
+
+        # `import abc` / `import typing` styles: abc.ABC, abc.abstractmethod, typing.Protocol
+        if 'abc' in imported_modules and attributes_used & {'abc.ABC', 'abc.ABCMeta', 'abc.abstractmethod'}:
+            has_abc = True
+        if 'typing' in imported_modules and 'typing.Protocol' in attributes_used:
+            has_protocol = True
 
         assert has_protocol or has_abc, """
         interfaces.py should use Protocol or ABC for interface definitions.
@@ -192,24 +206,26 @@ class TestProjectStructure:
     @pytest.fixture
     def structure_content(self):
         """Load project structure content."""
-        structure_file = Path("project_structure.txt")
+        structure_file = (HERE / "project_structure.txt")
         if not structure_file.exists():
             pytest.skip("project_structure.txt not found")
         return structure_file.read_text()
 
     def test_includes_key_components(self, structure_content):
         """Should include essential project components."""
+        lowered = structure_content.lower()
+        # Folder names as whole words, with or without a trailing slash (tree-style listings print none)
         # Check for main entry point
-        has_main = 'main.py' in structure_content.lower()
+        has_main = 'main.py' in lowered
 
-        # Check for code organization (a package folder, or utils/ or src/)
-        has_utils = any(d in structure_content.lower() for d in ('expense_tracker/', 'utils/', 'src/')) or 'utils\\' in structure_content
+        # Check for code organization (a package folder, or utils or src)
+        has_utils = re.search(r'\b(expense_tracker|utils|src)\b', lowered) is not None
 
         # Check for tests
-        has_tests = 'tests/' in structure_content.lower() or 'test/' in structure_content.lower()
+        has_tests = re.search(r'\btests?\b', lowered) is not None
 
-        # Check for data (data/ or examples/)
-        has_data = 'data/' in structure_content.lower() or 'examples/' in structure_content.lower()
+        # Check for data (data or examples)
+        has_data = re.search(r'\b(data|examples)\b', lowered) is not None
 
         missing = []
         if not has_main: missing.append("main.py (entry point)")
@@ -253,7 +269,7 @@ class TestDesignQuality:
         content = {}
         files = ['architecture_plan.md', 'interfaces.py', 'project_structure.txt']
         for filename in files:
-            filepath = Path(filename)
+            filepath = HERE / filename
             if filepath.exists():
                 content[filename] = filepath.read_text()
         return content
@@ -261,10 +277,11 @@ class TestDesignQuality:
     def test_applies_solid_principles(self, all_content):
         """Should demonstrate understanding of SOLID principles."""
         combined = ' '.join(all_content.values()).lower()
-        solid_keywords = ['solid', 'single responsibility', 'srp', 'open/closed', 'ocp',
-                         'liskov', 'interface segregation', 'isp', 'dependency inversion', 'dip']
+        # Whole words only: 'isp' inside "display" or 'dip' inside "dipping" doesn't count
+        solid_pattern = re.compile(r'\b(solid|single responsibility|srp|open[/ -]closed|ocp|liskov|'
+                                   r'interface segregation|isp|dependency inversion|dip)\b')
 
-        mentions = [kw for kw in solid_keywords if kw in combined]
+        mentions = solid_pattern.findall(combined)
         assert len(mentions) >= 1, """
         Planning should reference SOLID principles.
 

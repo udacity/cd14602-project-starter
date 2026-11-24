@@ -21,7 +21,7 @@ pytest test_cli_interface.py -v    # baseline, against v1: 6 passed
 ```
 
 Create `cli_interface_v2.py` and run the same command after each change: it must stay at 6 passed, now against v2.
-Then compare with the solution:
+Then compare with the solution. In the Udacity workspace, the `solution` folder sits next to `starter`:
 
 ```bash
 cd ../solution

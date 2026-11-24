@@ -72,7 +72,7 @@ This release represents a complete project reorganization to align with the docu
 - All 49 code tests continue to pass
 
 #### For Developers
-- The lesson's exercise files (report engine, CLI interface v1 and v2, their tests) are in the Test Creation and Refactoring exercise folders
+- The lesson's exercise files are in other exercise folders: the report engine and its tests in Test Creation, CLI interface v1 and its tests in Refactoring, and v2 in the Refactoring solution
 - The production code in `expense_tracker/` package was not modified
 - Import paths remain unchanged
 - Test suite location unchanged (`tests/` directory)
@@ -112,12 +112,12 @@ expense_tracker_project/
 expense_tracker_project/
 ├── README.md (new user documentation)
 ├── ARCHITECTURE.md (new developer documentation)
-├── CHANGELOG.md (this file)
 ├── main.py
 ├── expense_tracker/ (main package - unchanged)
 ├── tests/ (test suite - unchanged)
 ├── examples/ (sample data - unchanged)
 ├── docs/ (technical docs - reorganized)
+│   ├── CHANGELOG.md (this file)
 │   ├── IMPLEMENTATION_GUIDE.md
 │   ├── PROJECT_STRUCTURE.md
 │   ├── PROJECT_README.md
@@ -135,7 +135,7 @@ expense_tracker_project/
 
 ### Rollback Information
 
-The report engine and CLI interface files, with their tests, are in the Test Creation and Refactoring exercise folders.
+The report engine and its tests are in the Test Creation exercise folder; CLI interface v1 and its tests are in the Refactoring exercise folder, and v2 in the Refactoring solution.
 
 ---
 

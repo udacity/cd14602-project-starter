@@ -20,7 +20,7 @@ pytest tests/test_documentation_quality.py -v    # before you start: 9 failed, 3
 ```
 
 Write `README.md` and `ARCHITECTURE.md` in `starter/` (next to `main.py`) until all 12 pass, and check every command
-and example in them by running it. Then compare with the solution:
+and example in them by running it. Then compare with the solution. In the Udacity workspace, the `solution` folder sits next to `starter`:
 
 ```bash
 cd ../solution

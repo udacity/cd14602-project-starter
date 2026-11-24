@@ -20,7 +20,7 @@ cd starter
 pytest test_planning_process.py -v    # before you start: 5 failed, 9 skipped
 ```
 
-Write the three files, then run it again until all 14 pass. Then compare with the solution:
+Write the three files, then run it again until all 14 pass. Then compare with the solution. In the Udacity workspace, the `solution` folder sits next to `starter`:
 
 ```bash
 cd ../solution

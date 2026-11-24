@@ -21,7 +21,7 @@ pytest tests/ -v    # before you start: 22 failed, 27 passed
 
 Generate `CSVTransactionLoader`, then `CategorySummaryReport` and `MonthlyTotalsReport`, running the tests after each.
 With those three done, 46 pass and 3 fail: `TopExpensesReport` is yours to implement. When all 49 pass, compare with
-the solution:
+the solution. In the Udacity workspace, the `solution` folder sits next to `starter`:
 
 ```bash
 cd ../solution

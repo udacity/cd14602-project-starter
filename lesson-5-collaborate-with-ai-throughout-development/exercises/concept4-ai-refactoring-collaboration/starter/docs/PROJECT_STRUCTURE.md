@@ -40,7 +40,11 @@ expense_tracker/
 │   ├── test_cli.py              # Integration tests for CLI
 │   │
 │   └── fixtures/                # Test data
-│       └── valid_expenses.csv   # Sample valid CSV for testing
+│       ├── valid_expenses.csv   # Sample valid CSV for testing
+│       ├── invalid_format.csv   # No description column
+│       ├── invalid_date.csv     # Bad date in row 3
+│       ├── negative_amount.csv  # Negative amount
+│       └── empty.csv            # Header row only
 │
 ├── examples/                    # Example data files
 │   └── sample_expenses.csv      # Sample expense data for demonstration
@@ -257,11 +261,11 @@ Integration tests for CLI:
 #### `tests/fixtures/valid_expenses.csv`
 Sample valid CSV data for testing (6 transactions)
 
-**Additional fixtures needed** (to be created):
-- `invalid_date.csv` - Invalid date format
-- `invalid_format.csv` - Wrong column structure
+#### Error-case fixtures
+- `invalid_date.csv` - Invalid date format (row 3)
+- `invalid_format.csv` - Wrong column structure (no `description`)
 - `negative_amount.csv` - Negative amounts
-- `empty.csv` - Empty file
+- `empty.csv` - The header row only
 
 ---
 

@@ -35,7 +35,9 @@ class TestCSVTransactionLoader(unittest.TestCase):
         self.assertTrue(all(isinstance(t, Transaction) for t in transactions))
         first = transactions[0]
         self.assertEqual(first.date, date(2025, 1, 15))
+        self.assertIsInstance(first.amount, Decimal)
         self.assertEqual(first.amount, Decimal('42.50'))
+        # The fixture pads this row's category and description with spaces: they are stripped
         self.assertEqual(first.category, 'Food')
         self.assertEqual(first.description, 'Lunch at cafe')
 
@@ -58,8 +60,10 @@ class TestCSVTransactionLoader(unittest.TestCase):
 
     def test_load_negative_amount_raises_error(self):
         """Test that negative amounts raise ValidationError."""
-        with self.assertRaises(ValidationError):
+        # fixtures/negative_amount.csv: the first data row (row 2) has the amount -10.00
+        with self.assertRaises(ValidationError) as ctx:
             self.loader.load(str(self.fixtures_dir / 'negative_amount.csv'))
+        self.assertEqual(ctx.exception.row_number, 2)
 
     def test_load_empty_file_returns_empty_list(self):
         """Test that empty CSV returns empty transaction list."""

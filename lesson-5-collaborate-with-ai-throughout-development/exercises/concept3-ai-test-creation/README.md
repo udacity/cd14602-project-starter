@@ -29,7 +29,7 @@ pytest test_report_engine.py -v
 pytest validate_test_quality.py -v
 ```
 
-Then compare with the solution:
+Then compare with the solution. In the Udacity workspace, the `solution` folder sits next to `starter`:
 
 ```bash
 cd ../solution
