@@ -1,7 +1,7 @@
 """
 CLI Interface Module - Version 1
 
-Displays reports in terminal with formatting and color.
+Displays reports in terminal with formatting.
 This version works but has areas for improvement.
 """
 

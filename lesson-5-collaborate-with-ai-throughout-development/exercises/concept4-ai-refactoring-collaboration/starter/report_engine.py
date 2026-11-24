@@ -6,7 +6,7 @@ and report processing. It provides a simple interface that hides the complexity
 of working with multiple components (loaders and report strategies).
 """
 
-from typing import Dict, Any
+from typing import Any
 
 
 class ReportEngine:
@@ -21,25 +21,27 @@ class ReportEngine:
         """
         self.loader = loader
 
-    def generate_report(self, filepath: str, mode) -> Dict[str, Any]:
+    def generate_report(self, filepath: str, mode) -> Any:
         """
         Generate report from file using specified mode.
 
         Workflow:
         1. Load transactions from file using loader
         2. Process transactions using mode strategy
-        3. Return formatted report data
+        3. Return the mode's result
 
         Args:
             filepath: Path to the transaction data file
             mode: ReportMode strategy for processing transactions
 
         Returns:
-            Dictionary containing report data from the mode's processing
+            Whatever the mode's process_transactions returns
+            (the package's report strategies return the report text)
 
         Raises:
-            FileNotFoundError: If file doesn't exist (propagated from loader)
-            ValueError: If data is invalid (propagated from loader or mode)
+            Any exception the loader or the mode raises, unchanged
+            (the package's CSVTransactionLoader raises DataLoadError
+            and ValidationError)
         """
         transactions = self.loader.load(filepath)
         report_data = mode.process_transactions(transactions)

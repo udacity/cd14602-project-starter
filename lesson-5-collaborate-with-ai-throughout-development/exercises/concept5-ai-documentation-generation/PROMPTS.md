@@ -32,11 +32,11 @@ Displays formatted reports in terminal
 </what_it_does>
 
 <technical_details>
-- Python 3.8+ required
+- Python 3.10+ required
 - No external dependencies (stdlib only)
 - CSV format: date,amount,category,description
 - Entry point: main.py
-- Sample data included in data/ folder
+- Sample data included in examples/ folder
 </technical_details>
 </application_context>
 
@@ -100,16 +100,19 @@ Software developers who need to:
 
 <system_components>
 <modules>
-- transaction_loader.py: CSV loading and validation (TransactionLoader ABC, CSVTransactionLoader implementation)
-- report_modes.py: Report strategies (ReportMode ABC, SummaryByCategory, MonthlyTotalReport)
-- report_engine.py: Orchestration (ReportEngine coordinates loader and mode)
-- cli_interface.py: Terminal display formatting
-- main.py: CLI entry point with argument parsing
+- expense_tracker/domain/models.py, exceptions.py: Transaction (frozen dataclass, Decimal amounts) and the exceptions
+- expense_tracker/data/transaction_loader.py: CSV loading and validation (TransactionLoader ABC, CSVTransactionLoader)
+- expense_tracker/reports/report_mode.py: Report strategies (ReportMode ABC, CategorySummaryReport, MonthlyTotalsReport, TopExpensesReport)
+- expense_tracker/reports/report_factory.py: Report name to strategy (category, monthly, top)
+- expense_tracker/presentation/formatters.py: Terminal formatting helpers
+- expense_tracker/cli.py: Argument parsing, orchestration, exit codes
+- main.py: CLI entry point
 </modules>
 
 <design_patterns>
 - Strategy Pattern: For pluggable report types
-- Dependency Injection: ReportEngine depends on abstractions
+- Factory Pattern: ReportFactory creates report strategies by name
+- Dependency Inversion: the CLI depends on the TransactionLoader and ReportMode abstractions
 - Abstract Base Classes: Define clear contracts
 </design_patterns>
 
@@ -168,10 +171,13 @@ Review and enhance docstrings in all Python modules for completeness
 </task>
 
 <modules_to_review>
-- transaction_loader.py
-- report_modes.py
-- report_engine.py
-- cli_interface.py
+- expense_tracker/data/transaction_loader.py
+- expense_tracker/reports/report_mode.py
+- expense_tracker/reports/report_factory.py
+- expense_tracker/presentation/formatters.py
+- expense_tracker/cli.py
+- expense_tracker/domain/models.py
+- expense_tracker/domain/exceptions.py
 </modules_to_review>
 
 <docstring_standards>

@@ -17,7 +17,7 @@ Design modular architecture for a CLI expense tracker application
 
 <context>
 <application_type>Command-line expense tracking and reporting tool</application_type>
-<tech_stack>Python 3.8+, CSV file storage, standard library only</tech_stack>
+<tech_stack>Python 3.10+, CSV file storage, standard library only</tech_stack>
 <user_workflow>
 1. User runs CLI with expense data file
 2. User selects report mode (summary by category, monthly totals, etc.)
@@ -64,8 +64,8 @@ Create detailed project structure and Python interface definitions for the expen
 Based on previous discussion:
 - TransactionLoader: Handles CSV loading and validation
 - ReportMode: Strategy interface for different report types
-- ReportEngine: Orchestrates the complete workflow
-- CLIInterface: Terminal display formatting
+- ReportFactory: Creates the report strategy for each report name
+- CLI (cli.py): Orchestrates the workflow and prints the report
 </architecture_decisions>
 
 <deliverables>

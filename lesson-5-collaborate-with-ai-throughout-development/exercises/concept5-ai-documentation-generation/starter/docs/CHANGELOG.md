@@ -31,26 +31,21 @@ This release represents a complete project reorganization to align with the docu
   - Performance and security considerations
   - Future enhancement suggestions
 
-- **REORGANIZATION_PLAN.md**: Documentation of the reorganization strategy and process
-
-- **_lesson_exercises/**: Archive directory for lesson-related files
-
 ### Changed
 
 - **Project Structure**: Reorganized to follow industry-standard layout:
   - Main application code in `expense_tracker/` package (unchanged)
   - Documentation at root level (README.md, ARCHITECTURE.md)
   - Technical docs in `docs/` directory
-  - Lesson exercise files archived in `_lesson_exercises/`
+  - Lesson exercise files removed from the project root
 
 - **Documentation Organization**:
-  - Moved `documentation_requirements.md` to `docs/`
   - Moved `DELIVERABLES_SUMMARY.md` to `docs/`
   - Kept technical documentation in `docs/` subdirectory
 
 ### Removed
 
-- **Root-level duplicate implementations** (archived in `_lesson_exercises/`):
+- **Root-level duplicate implementations** (removed from this folder):
   - `cli_interface.py` - Old CLI implementation (dict-based)
   - `cli_interface_v1.py` - Refactoring exercise version 1
   - `cli_interface_v2.py` - Refactoring exercise version 2
@@ -58,11 +53,10 @@ This release represents a complete project reorganization to align with the docu
   - `report_modes.py` - Old report strategies (dict-based)
   - `transaction_loader.py` - Old data loader (dict-based)
 
-- **Root-level test files** (archived in `_lesson_exercises/`):
+- **Root-level test files** (removed from this folder):
   - `test_cli_interface.py` - Tests for old CLI versions
   - `test_report_engine.py` - Tests for old report engine
   - `test_report_engine_EXAMPLES.py` - Example tests
-  - `test_documentation_quality.py` - Documentation validation tests
   - `validate_test_quality.py` - Test validation utility
   - `compare_outputs.py` - Output comparison utility
 
@@ -75,10 +69,10 @@ This release represents a complete project reorganization to align with the docu
 - No changes to the application functionality
 - All command-line options remain the same
 - CSV file format unchanged
-- All 49 tests continue to pass
+- All 49 code tests continue to pass
 
 #### For Developers
-- Old lesson exercise files are available in `_lesson_exercises/` if needed
+- The lesson's exercise files are in other exercise folders: the report engine and its tests in Test Creation, CLI interface v1 and its tests in Refactoring, and v2 in the Refactoring solution
 - The production code in `expense_tracker/` package was not modified
 - Import paths remain unchanged
 - Test suite location unchanged (`tests/` directory)
@@ -86,7 +80,7 @@ This release represents a complete project reorganization to align with the docu
 ### Verification
 
 All validation checks passed:
-- ✅ All 49 tests pass (`pytest tests/ -v`)
+- ✅ All 49 code tests pass (`pytest tests/ -v` also runs the 12 documentation checks)
 - ✅ Application runs successfully with all report types
 - ✅ Category report: `python main.py examples/sample_expenses.csv --report category`
 - ✅ Monthly report: `python main.py examples/sample_expenses.csv --report monthly`
@@ -118,25 +112,17 @@ expense_tracker_project/
 expense_tracker_project/
 ├── README.md (new user documentation)
 ├── ARCHITECTURE.md (new developer documentation)
-├── CHANGELOG.md (this file)
-├── REORGANIZATION_PLAN.md
 ├── main.py
 ├── expense_tracker/ (main package - unchanged)
 ├── tests/ (test suite - unchanged)
 ├── examples/ (sample data - unchanged)
 ├── docs/ (technical docs - reorganized)
+│   ├── CHANGELOG.md (this file)
 │   ├── IMPLEMENTATION_GUIDE.md
 │   ├── PROJECT_STRUCTURE.md
 │   ├── PROJECT_README.md
-│   ├── documentation_requirements.md (moved from root)
 │   └── DELIVERABLES_SUMMARY.md (moved from root)
-└── _lesson_exercises/ (archived files)
-    ├── LESSON_README.md
-    ├── cli_interface*.py
-    ├── report_engine.py
-    ├── report_modes.py
-    ├── transaction_loader.py
-    └── test_*.py
+└── documentation_requirements.md
 ```
 
 ### Benefits
@@ -149,7 +135,7 @@ expense_tracker_project/
 
 ### Rollback Information
 
-If needed, all archived files are available in `_lesson_exercises/` directory and can be restored to their original locations.
+The report engine and its tests are in the Test Creation exercise folder; CLI interface v1 and its tests are in the Refactoring exercise folder, and v2 in the Refactoring solution.
 
 ---
 

@@ -17,7 +17,7 @@ A command-line expense tracking and reporting tool built with Python following S
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - No external dependencies (uses standard library only)
 
 ### Installation

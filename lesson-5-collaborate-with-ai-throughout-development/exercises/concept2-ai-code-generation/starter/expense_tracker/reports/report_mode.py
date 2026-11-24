@@ -25,7 +25,6 @@ Example Usage:
 """
 
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from typing import List
 
 from expense_tracker.domain.models import Transaction
@@ -206,63 +205,9 @@ class CategorySummaryReport(ReportMode):
             >>> report = CategorySummaryReport()
             >>> print(report.process_transactions(txns))
         """
-        # Validate non-empty dataset
-        if not transactions:
-            raise EmptyDatasetError("Cannot generate report from empty transaction list")
-
-        # Group transactions by category
-        category_data = defaultdict(list)
-        for transaction in transactions:
-            category_data[transaction.category].append(transaction.amount)
-
-        # Calculate totals, counts, and averages for each category
-        category_stats = {}
-        for category, amounts in category_data.items():
-            total = sum(amounts)
-            count = len(amounts)
-            average = total / count
-            category_stats[category] = {
-                'total': total,
-                'count': count,
-                'average': average
-            }
-
-        # Sort categories by total amount (descending)
-        sorted_categories = sorted(
-            category_stats.items(),
-            key=lambda item: item[1]['total'],
-            reverse=True
+        raise NotImplementedError(
+            "CategorySummaryReport.process_transactions() is a planned stub: generate it in Exercise 2"
         )
-
-        # Calculate grand totals
-        grand_total = sum(stats['total'] for stats in category_stats.values())
-        grand_count = sum(stats['count'] for stats in category_stats.values())
-        grand_average = grand_total / grand_count if grand_count > 0 else 0
-
-        # Format output
-        lines = []
-        lines.append("Category Summary Report")
-        lines.append("=" * 50)
-        lines.append(f"{'Category':<20} {'Total':>12} {'Count':>8} {'Avg':>10}")
-        lines.append("-" * 50)
-
-        for category, stats in sorted_categories:
-            lines.append(
-                f"{category:<20} "
-                f"${stats['total']:>11,.2f} "
-                f"{stats['count']:>8} "
-                f"${stats['average']:>9,.2f}"
-            )
-
-        lines.append("-" * 50)
-        lines.append(
-            f"{'TOTAL':<20} "
-            f"${grand_total:>11,.2f} "
-            f"{grand_count:>8} "
-            f"${grand_average:>9,.2f}"
-        )
-
-        return '\n'.join(lines)
 
     def get_report_name(self) -> str:
         """Return 'Category Summary'."""
@@ -326,61 +271,9 @@ class MonthlyTotalsReport(ReportMode):
             >>> report = MonthlyTotalsReport()
             >>> print(report.process_transactions(txns))
         """
-        # Validate non-empty dataset
-        if not transactions:
-            raise EmptyDatasetError("Cannot generate report from empty transaction list")
-
-        # Group transactions by month
-        monthly_data = defaultdict(list)
-        for transaction in transactions:
-            # Extract year-month in YYYY-MM format
-            month_key = transaction.date.strftime('%Y-%m')
-            monthly_data[month_key].append(transaction.amount)
-
-        # Calculate totals, counts, and averages for each month
-        monthly_stats = {}
-        for month, amounts in monthly_data.items():
-            total = sum(amounts)
-            count = len(amounts)
-            average = total / count
-            monthly_stats[month] = {
-                'total': total,
-                'count': count,
-                'average': average
-            }
-
-        # Sort months chronologically
-        sorted_months = sorted(monthly_stats.items(), key=lambda item: item[0])
-
-        # Calculate grand totals
-        grand_total = sum(stats['total'] for stats in monthly_stats.values())
-        grand_count = sum(stats['count'] for stats in monthly_stats.values())
-        grand_average = grand_total / grand_count if grand_count > 0 else 0
-
-        # Format output
-        lines = []
-        lines.append("Monthly Totals Report")
-        lines.append("=" * 50)
-        lines.append(f"{'Month':<15} {'Total':>12} {'Count':>8} {'Avg':>10}")
-        lines.append("-" * 50)
-
-        for month, stats in sorted_months:
-            lines.append(
-                f"{month:<15} "
-                f"${stats['total']:>11,.2f} "
-                f"{stats['count']:>8} "
-                f"${stats['average']:>9,.2f}"
-            )
-
-        lines.append("-" * 50)
-        lines.append(
-            f"{'TOTAL':<15} "
-            f"${grand_total:>11,.2f} "
-            f"{grand_count:>8} "
-            f"${grand_average:>9,.2f}"
+        raise NotImplementedError(
+            "MonthlyTotalsReport.process_transactions() is a planned stub: generate it in Exercise 2"
         )
-
-        return '\n'.join(lines)
 
     def get_report_name(self) -> str:
         """Return 'Monthly Totals'."""
@@ -455,53 +348,9 @@ class TopExpensesReport(ReportMode):
             >>> report = TopExpensesReport(top_n=2)
             >>> print(report.process_transactions(txns))
         """
-        # Validate non-empty dataset
-        if not transactions:
-            raise EmptyDatasetError("Cannot generate report from empty transaction list")
-
-        # Sort transactions by amount (descending)
-        sorted_transactions = sorted(
-            transactions,
-            key=lambda t: t.amount,
-            reverse=True
+        raise NotImplementedError(
+            "TopExpensesReport.process_transactions() is a planned stub: generate it in Exercise 2"
         )
-
-        # Take top N transactions (or all if fewer than N)
-        top_transactions = sorted_transactions[:self.top_n]
-        actual_count = len(top_transactions)
-
-        # Calculate total of displayed transactions
-        total_amount = sum(t.amount for t in top_transactions)
-
-        # Format output
-        lines = []
-        lines.append(f"Top {self.top_n} Expenses Report")
-        lines.append("=" * 80)
-        lines.append(f"{'Date':<12} {'Amount':>12} {'Category':<20} {'Description':<30}")
-        lines.append("-" * 80)
-
-        for transaction in top_transactions:
-            # Truncate long descriptions to fit in column
-            description = transaction.description
-            if len(description) > 30:
-                description = description[:27] + "..."
-
-            lines.append(
-                f"{transaction.date} "
-                f"${transaction.amount:>11,.2f} "
-                f"{transaction.category:<20} "
-                f"{description:<30}"
-            )
-
-        lines.append("-" * 80)
-        lines.append(f"TOTAL (top {actual_count})  ${total_amount:>11,.2f}")
-
-        # Add note if fewer transactions than requested
-        if actual_count < self.top_n:
-            lines.append("")
-            lines.append(f"Note: Only {actual_count} transaction(s) available")
-
-        return '\n'.join(lines)
 
     def get_report_name(self) -> str:
         """Return 'Top N Expenses' where N is the configured limit."""

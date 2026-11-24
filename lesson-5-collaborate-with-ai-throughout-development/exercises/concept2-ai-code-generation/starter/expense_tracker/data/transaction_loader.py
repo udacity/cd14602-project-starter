@@ -5,15 +5,11 @@ This module defines the contract for loading transactions from various sources
 (CSV files, databases, APIs, etc.) while ensuring validation and error handling.
 """
 
-import csv
 from abc import ABC, abstractmethod
-from datetime import date
-from decimal import Decimal, InvalidOperation
-from pathlib import Path
 from typing import List
 
 from expense_tracker.domain.models import Transaction
-from expense_tracker.domain.exceptions import DataLoadError, ValidationError
+from expense_tracker.domain.exceptions import DataLoadError, ValidationError  # noqa: F401 (raised by implementations)
 
 
 class TransactionLoader(ABC):
@@ -180,58 +176,9 @@ class CSVTransactionLoader(TransactionLoader):
 
         See base class for additional details.
         """
-        file_path = Path(source)
-
-        # Check file existence
-        if not file_path.exists():
-            raise DataLoadError(f"File not found: {source}")
-
-        # Check file readability
-        if not file_path.is_file():
-            raise DataLoadError(f"Path is not a file: {source}")
-
-        try:
-            with open(file_path, 'r', encoding='utf-8', newline='') as csvfile:
-                # Check if file is empty
-                first_char = csvfile.read(1)
-                if not first_char:
-                    raise DataLoadError(f"File is empty: {source}")
-                csvfile.seek(0)
-
-                reader = csv.DictReader(csvfile)
-
-                # Validate CSV has required columns
-                if reader.fieldnames is None:
-                    raise ValidationError("CSV file has no header row")
-
-                actual_columns = set(reader.fieldnames)
-                missing_columns = self.REQUIRED_COLUMNS - actual_columns
-                if missing_columns:
-                    missing_str = ', '.join(sorted(missing_columns))
-                    raise ValidationError(
-                        f"CSV missing required columns: {missing_str}"
-                    )
-
-                # Load and validate transactions
-                transactions = []
-                for row_num, row in enumerate(reader, start=2):  # Start at 2 (header is row 1)
-                    transaction = self._validate_and_create_transaction(row, row_num)
-                    transactions.append(transaction)
-
-                return transactions
-
-        except ValidationError:
-            raise
-        except DataLoadError:
-            raise
-        except PermissionError as e:
-            raise DataLoadError(f"Permission denied reading file: {source}") from e
-        except UnicodeDecodeError as e:
-            raise DataLoadError(f"File encoding error: {source}") from e
-        except csv.Error as e:
-            raise DataLoadError(f"CSV parsing error in {source}: {e}") from e
-        except OSError as e:
-            raise DataLoadError(f"Error reading file {source}: {e}") from e
+        raise NotImplementedError(
+            "CSVTransactionLoader.load() is a planned stub: generate it in Exercise 2"
+        )
 
     def validate_source(self, source: str) -> bool:
         """
@@ -247,82 +194,6 @@ class CSVTransactionLoader(TransactionLoader):
 
         See base class for additional details.
         """
-        try:
-            file_path = Path(source)
-            if not file_path.exists() or not file_path.is_file():
-                return False
-
-            # Try to open file to check read permissions
-            with open(file_path, 'r', encoding='utf-8'):
-                pass
-            return True
-        except Exception:
-            return False
-
-    def _validate_and_create_transaction(
-        self, row: dict, row_number: int
-    ) -> Transaction:
-        """
-        Validate CSV row data and create Transaction object.
-
-        Args:
-            row: Dictionary from csv.DictReader with column names as keys
-            row_number: Row number in CSV file (for error messages)
-
-        Returns:
-            Validated Transaction object
-
-        Raises:
-            ValidationError: If any field is invalid
-        """
-        # Extract and strip whitespace from all fields
-        date_str = row.get('date', '').strip()
-        amount_str = row.get('amount', '').strip()
-        category = row.get('category', '').strip()
-        description = row.get('description', '').strip()
-
-        # Validate required fields are not empty
-        if not date_str:
-            raise ValidationError("Date field is empty", row_number=row_number)
-        if not amount_str:
-            raise ValidationError("Amount field is empty", row_number=row_number)
-        if not category:
-            raise ValidationError("Category field is empty", row_number=row_number)
-        if not description:
-            raise ValidationError("Description field is empty", row_number=row_number)
-
-        # Validate and parse date
-        try:
-            transaction_date = date.fromisoformat(date_str)
-        except ValueError as e:
-            raise ValidationError(
-                f"Invalid date format '{date_str}' (expected YYYY-MM-DD)",
-                row_number=row_number
-            ) from e
-
-        # Validate and parse amount
-        try:
-            amount = Decimal(amount_str)
-        except (InvalidOperation, ValueError) as e:
-            raise ValidationError(
-                f"Invalid amount '{amount_str}' (must be a number)",
-                row_number=row_number
-            ) from e
-
-        # Validate amount is positive
-        if amount <= 0:
-            raise ValidationError(
-                f"Amount must be positive, got {amount}",
-                row_number=row_number
-            )
-
-        # Create Transaction object (will perform additional validation in __post_init__)
-        try:
-            return Transaction(
-                date=transaction_date,
-                amount=amount,
-                category=category,
-                description=description
-            )
-        except ValueError as e:
-            raise ValidationError(str(e), row_number=row_number) from e
+        raise NotImplementedError(
+            "CSVTransactionLoader.validate_source() is a planned stub: generate it in Exercise 2"
+        )

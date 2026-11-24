@@ -173,8 +173,8 @@ class TestReportEngineBasics:
         assert hasattr(report_engine, 'generate_report'), "Should have generate_report method"
         assert callable(report_engine.generate_report), "generate_report should be callable"
 
-    def test_generate_report_returns_dict(self, report_engine, mock_loader, mock_mode, sample_transactions):
-        """Test that generate_report returns a dictionary."""
+    def test_generate_report_returns_mode_result(self, report_engine, mock_loader, mock_mode, sample_transactions):
+        """Test that generate_report returns what the mode's process_transactions returns."""
         # Arrange
         mock_loader.load.return_value = sample_transactions
         mock_mode.process_transactions.return_value = {'total': 198.25}
@@ -183,7 +183,7 @@ class TestReportEngineBasics:
         result = report_engine.generate_report('test.csv', mock_mode)
 
         # Assert
-        assert isinstance(result, dict), "Result should be a dictionary"
+        assert result is mock_mode.process_transactions.return_value, "Result should be the mode's result, unchanged"
 
 
 # ===== TEST CLASS: Happy Path Scenarios =====
@@ -232,8 +232,7 @@ class TestReportGenerationHappyPath:
         report_engine.generate_report(filepath, mock_mode)
 
         # Assert
-        mock_loader.load.assert_called_once_with(filepath), \
-            "Loader should be called once with correct filepath"
+        mock_loader.load.assert_called_once_with(filepath)
 
     def test_mode_receives_transactions_from_loader(
         self, report_engine, mock_loader, mock_mode, sample_transactions
@@ -247,8 +246,7 @@ class TestReportGenerationHappyPath:
         report_engine.generate_report('test.csv', mock_mode)
 
         # Assert
-        mock_mode.process_transactions.assert_called_once_with(sample_transactions), \
-            "Mode should receive transactions from loader"
+        mock_mode.process_transactions.assert_called_once_with(sample_transactions)
 
     @pytest.mark.parametrize("mode_name,expected_output", [
         ('summary', {'type': 'summary', 'data': {'Food': 78.25}}),
@@ -345,8 +343,7 @@ class TestReportGenerationErrors:
 
         assert "missing.csv" in str(exc_info.value), \
             "Error message should include filename"
-        mock_mode.process_transactions.assert_not_called(), \
-            "Mode should not be called when loader fails"
+        mock_mode.process_transactions.assert_not_called()
 
     def test_file_not_found_specific_message(self, report_engine, mock_loader, mock_mode):
         """Test that FileNotFoundError contains specific error message."""
@@ -397,8 +394,7 @@ class TestReportGenerationErrors:
         result = report_engine.generate_report('empty.csv', mock_mode)
 
         # Assert
-        mock_mode.process_transactions.assert_called_once_with([]), \
-            "Mode should still be called with empty list"
+        mock_mode.process_transactions.assert_called_once_with([])
         assert result['count'] == 0, "Should return zero count for empty dataset"
 
     def test_loader_raises_permission_error(self, report_engine, mock_loader, mock_mode):
@@ -433,8 +429,7 @@ class TestReportGenerationErrors:
             pass
 
         # Assert
-        mock_mode.process_transactions.assert_not_called(), \
-            "Mode should not be called if loader fails"
+        mock_mode.process_transactions.assert_not_called()
 
     def test_loader_returns_none_instead_of_list(self, report_engine, mock_loader, mock_mode):
         """
@@ -465,11 +460,9 @@ class TestReportGenerationErrors:
             "Error message should indicate None cannot be iterated"
 
         # Verify loader was called before failure
-        mock_loader.load.assert_called_once_with('test.csv'), \
-            "Loader should have been called"
+        mock_loader.load.assert_called_once_with('test.csv')
         # Mode was also called (with None), which caused the error
-        mock_mode.process_transactions.assert_called_once_with(None), \
-            "Mode should have been called with None, causing the error"
+        mock_mode.process_transactions.assert_called_once_with(None)
 
     def test_mode_raises_unexpected_exception(
         self, report_engine, mock_loader, mock_mode, sample_transactions
@@ -498,10 +491,8 @@ class TestReportGenerationErrors:
             "Original exception message should be preserved"
 
         # Verify both loader and mode were called before failure
-        mock_loader.load.assert_called_once_with('test.csv'), \
-            "Loader should have been called"
-        mock_mode.process_transactions.assert_called_once_with(sample_transactions), \
-            "Mode should have been called with loaded transactions"
+        mock_loader.load.assert_called_once_with('test.csv')
+        mock_mode.process_transactions.assert_called_once_with(sample_transactions)
 
 
 # ===== TEST CLASS: Edge Cases =====
@@ -627,8 +618,7 @@ class TestEdgeCases:
         report_engine.generate_report(special_path, mock_mode)
 
         # Assert
-        mock_loader.load.assert_called_once_with(special_path), \
-            "Should pass special filepath unchanged to loader"
+        mock_loader.load.assert_called_once_with(special_path)
 
     def test_different_date_ranges_in_transactions(
         self, report_engine, mock_loader, mock_mode

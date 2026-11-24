@@ -43,7 +43,11 @@ expense_tracker/
 │   ├── test_report_factory.py   ✅ Test cases defined
 │   ├── test_cli.py              ✅ Test cases defined
 │   └── fixtures/
-│       └── valid_expenses.csv   ✅ Sample test data
+│       ├── valid_expenses.csv   ✅ Sample test data
+│       ├── invalid_format.csv   ✅ No description column
+│       ├── invalid_date.csv     ✅ Bad date in row 3
+│       ├── negative_amount.csv  ✅ Negative amount
+│       └── empty.csv            ✅ Header row only
 │
 ├── examples/
 │   └── sample_expenses.csv      ✅ 20 sample transactions
@@ -388,7 +392,7 @@ See `docs/IMPLEMENTATION_GUIDE.md` lines 177-299 for complete implementation exa
 
 All interfaces use:
 - ✅ Full type hints (`typing` module)
-- ✅ Python 3.8+ type syntax
+- ✅ Python 3.10+ type syntax
 - ✅ Return type annotations
 - ✅ Parameter type annotations
 - ✅ Generic types (`List[Transaction]`, `Dict[str, Any]`)
@@ -410,9 +414,9 @@ All interfaces include:
 
 | Test File | Target Module | Test Cases | Status |
 |-----------|---------------|------------|--------|
-| `test_models.py` | `domain/models.py` | 7 cases | ✅ Defined |
+| `test_models.py` | `domain/models.py` | 9 cases | ✅ Defined |
 | `test_csv_loader.py` | `data/transaction_loader.py` | 9 cases | ✅ Defined |
-| `test_report_modes.py` | `reports/report_mode.py` | 15 cases (3 classes) | ✅ Defined |
+| `test_report_modes.py` | `reports/report_mode.py` | 13 cases (3 classes) | ✅ Defined |
 | `test_report_factory.py` | `reports/report_factory.py` | 9 cases | ✅ Defined |
 | `test_cli.py` | `cli.py` | 9 cases | ✅ Defined |
 
@@ -422,12 +426,10 @@ All interfaces include:
 
 - ✅ `tests/fixtures/valid_expenses.csv` - 6 valid transactions
 - ✅ `examples/sample_expenses.csv` - 20 realistic transactions
-
-**Additional fixtures needed** (documented in tests):
-- `invalid_date.csv`
-- `invalid_format.csv`
-- `negative_amount.csv`
-- `empty.csv`
+- ✅ `tests/fixtures/invalid_format.csv` - no `description` column
+- ✅ `tests/fixtures/invalid_date.csv` - a bad date in row 3
+- ✅ `tests/fixtures/negative_amount.csv` - a negative amount
+- ✅ `tests/fixtures/empty.csv` - the header row only
 
 ---
 
