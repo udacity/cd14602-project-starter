@@ -64,7 +64,7 @@ Your assessment should:
 ```bash
 cd starter/
 pip install -r requirements.txt
-pytest test_job_matching.py -v
+pytest test_job_matching.py -v -s
 ```
 
 The tests will help you understand how the algorithm treats different candidate profiles and may reveal biased patterns in the recommendations.

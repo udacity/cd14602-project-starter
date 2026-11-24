@@ -58,12 +58,12 @@ Reliability engineer for safety-critical financial systems
 </role>
 
 <task>
-Add comprehensive reliability safeguards to financial recommendation system
+Add comprehensive reliability safeguards to the financial data processing pipeline
 </task>
 
 <reliability_requirements>
 <input_validation>
-- Validate all client data against finantial ranges
+- Validate all transaction data against valid ranges
 - Reject malformed inputs with clear errors
 - Handle missing data explicitly (never guess)
 - Check data freshness (no stale data)
@@ -71,26 +71,26 @@ Add comprehensive reliability safeguards to financial recommendation system
 </input_validation>
 
 <error_handling>
-- Fail-safe defaults (conservative recommendations when uncertain)
+- Fail-safe defaults (hold a transaction for review when validation is uncertain)
 - Graceful degradation (reduced functionality vs complete failure)
-- Clear error messages for clinicians
+- Clear error messages for operators
 - No silent failures
 - Comprehensive error logging
 </error_handling>
 
 <safety_mechanisms>
-- Human-in-the-loop for critical recommendations
-- Confidence thresholds (defer to human if low confidence)
-- Alert system for anomalous recommendations
-- Override mechanism for banks
-- Regular calibration against banking outcomes
+- Human review for failed or flagged transactions
+- Review thresholds (send large or unusual transactions to a human)
+- Alert system for anomalous transactions
+- Override mechanism for operators
+- Regular reconciliation against source records
 </safety_mechanisms>
 
 <monitoring>
 - Real-time performance metrics
 - Error rate tracking
 - Response time monitoring
-- Recommendation accuracy tracking
+- Validation failure tracking
 - Alert system for degraded performance
 </monitoring>
 
@@ -104,17 +104,17 @@ Add comprehensive reliability safeguards to financial recommendation system
 </reliability_requirements>
 
 <constraints>
-- Medical device regulatory compliance
-- Patient safety is paramount
-- No recommendation without sufficient confidence
+- Financial regulatory compliance
+- Data integrity is paramount
+- No transaction recorded without successful validation
 - Human oversight required for critical cases
-- Audit trail for all recommendations
+- Audit trail for all transactions
 </constraints>
 
 <forbidden_approaches>
 - Guessing or imputing critical financial data
 - Continuing with invalid inputs
-- Recommendations without confidence scores
+- Recording transactions that failed validation
 - Operating without monitoring
 - No fail-safe defaults
 </forbidden_approaches>
@@ -134,8 +134,8 @@ Edge Case Tests:
 
 Failure Mode Tests:
 - Database unavailable
-- Model service timeout
-- Invalid model output
+- External API timeout
+- Invalid API response
 - Data quality issues
 - High load conditions
 
@@ -143,7 +143,7 @@ Safety Tests:
 - Verify human-in-the-loop for critical cases
 - Confirm fail-safe defaults engage
 - Test override mechanisms work
-- Validate confidence thresholds
+- Validate review thresholds
 - Check alert system functions
 
 Performance Tests:

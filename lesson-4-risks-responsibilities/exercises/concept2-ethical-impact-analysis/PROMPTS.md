@@ -54,7 +54,7 @@ Ethical AI developer ensuring fairness and transparency
 </role>
 
 <task>
-Redesign loan approval system with ethical safeguards
+Redesign the job matching and candidate scoring system with ethical safeguards
 </task>
 
 <ethical_requirements>
@@ -91,7 +91,7 @@ Redesign loan approval system with ethical safeguards
 </ethical_requirements>
 
 <constraints>
-- Must comply with Fair Lending laws
+- Must comply with employment discrimination laws
 - Cannot discriminate based on protected characteristics
 - Decisions must be explainable to regulators
 - System must support human oversight
@@ -99,7 +99,7 @@ Redesign loan approval system with ethical safeguards
 </constraints>
 
 <testing_requirements>
-- Test approval rates across demographic groups
+- Test recommendation rates across demographic groups
 - Verify no disparate impact (80% rule)
 - Ensure explanations are accurate and meaningful
 - Validate appeal process works

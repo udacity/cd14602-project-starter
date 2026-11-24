@@ -67,10 +67,10 @@ Your assessment should:
 ```bash
 cd starter/
 pip install -r requirements.txt
-pytest test_data_pipeline.py -v
+pytest test_data_pipeline.py -v -s
 ```
 
-The tests include scenarios for normal operation, error conditions, and load testing that will help you understand the system's reliability characteristics.
+The tests include scenarios for normal operation and error conditions that will help you understand the system's reliability characteristics.
 
 ## Production Context
 

@@ -41,7 +41,7 @@ class TestBiasDetection:
         
         # This reveals significant age discrimination
         score_gap = young_score - older_score
-        if score_gap > 10:
+        if score_gap >= 10:
             print(f"🚨 AGE DISCRIMINATION: {score_gap:.1f} point gap between young and older candidates")
     
     def test_education_bias(self, scorer):
@@ -170,7 +170,7 @@ class TestRecommendationBias:
         candidates, jobs = sample_data
         
         young_candidate = candidates[2]  # Kevin, age 24
-        older_candidate = candidates[1]  # Maria, age 45
+        older_candidate = {**candidates[1], 'age': 52}  # Maria's profile at age 52
         
         young_recs = recommender.generate_recommendations(young_candidate, jobs)
         older_recs = recommender.generate_recommendations(older_candidate, jobs)

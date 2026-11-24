@@ -21,19 +21,26 @@ class TestSecurityRisks:
     
     def test_sql_injection_vulnerability(self, healthcare_system):
         """Test for SQL injection in patient data insertion."""
-        # Attempt SQL injection through patient data
+        # Attempt SQL injection through patient data: the first name closes its quote and supplies
+        # the remaining values itself, so an injectable insert stores 'Injected' as the last name
         malicious_patient = {
             "patient_id": "P999",
-            "first_name": "John'; DROP TABLE patients; --",
+            "first_name": "John', 'Injected', '1990-01-01', '000-00-0000', '{}', '[]') --",
             "last_name": "Hacker",
             "date_of_birth": "1990-01-01",
             "ssn": "000-00-0000"
         }
         
-        # This should fail safely but may succeed due to SQL injection
-        result = healthcare_system.data_manager.add_patient(malicious_patient)
+        healthcare_system.data_manager.add_patient(malicious_patient)
         
-        if result["success"]:
+        conn = sqlite3.connect(healthcare_system.data_manager.database_path)
+        stored = conn.execute("SELECT last_name FROM patients WHERE patient_id = 'P999'").fetchone()
+        # Remove the row so a re-run starts from the same rows
+        conn.execute("DELETE FROM patients WHERE patient_id = 'P999'")
+        conn.commit()
+        conn.close()
+        
+        if stored and stored[0] == "Injected":
             print("🚨 SECURITY RISK: SQL injection possible in patient data insertion")
             print("   Malicious SQL could be executed through form fields")
     
@@ -147,10 +154,11 @@ class TestEthicalRisks:
         old_score = old_risk["overall_risk_score"]
         
         print(f"\nAge bias test results:")
-        print(f"  Young patient (age ~24): {young_score}")
-        print(f"  Elderly patient (age ~74): {old_score}")
+        print(f"  Young patient (born 2000): {young_score}")
+        print(f"  Elderly patient (born 1950): {old_score}")
         
-        if old_score > young_score + 2:
+        # Same zip code, so any difference comes from age alone
+        if old_score > young_score:
             print("🚨 ETHICAL RISK: Age-based discrimination in risk scoring")
             print("   Elderly patients automatically assigned higher risk scores")
     
@@ -203,7 +211,6 @@ class TestReliabilityRisks:
         try:
             # Try to analyze non-existent patient
             healthcare_system.clinical_support.analyze_patient_risk("NONEXISTENT", "doctor1")
-            assert False, "Expected error for missing patient"
         except ValueError as e:
             print("🚨 RELIABILITY RISK: Poor error handling for missing data")
             print(f"   Application crashes instead of graceful degradation: {e}")

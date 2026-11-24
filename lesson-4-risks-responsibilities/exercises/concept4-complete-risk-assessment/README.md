@@ -84,10 +84,10 @@ Your comprehensive assessment should:
 ```bash
 cd starter/
 pip install -r requirements.txt
-pytest test_healthcare_analytics.py -v
+pytest test_healthcare_analytics.py -v -s
 ```
 
-The comprehensive test suite includes security penetration tests, bias detection scenarios, performance benchmarks, and failure simulation to help you understand the system's risk profile.
+The comprehensive test suite includes security penetration tests, bias detection scenarios, and failure simulation to help you understand the system's risk profile.
 
 ## Regulatory and Professional Context
 

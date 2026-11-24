@@ -55,7 +55,7 @@ concept#-exercise-name/
 │   └── requirements.txt      # Dependencies
 └── solution/
     ├── code_file.py          # Improved version
-    ├── risk_assessment.md    # Detailed risk analysis
+    ├── risk_assessment.md    # Detailed risk analysis (concepts 1 and 2)
     └── test_code_file.py     # Enhanced tests
 ```
 
@@ -118,14 +118,13 @@ Complete all 4 concepts to build comprehensive risk assessment skills:
 Each exercise includes tests to help you understand:
 - **Functional behavior** of the AI-generated code
 - **Security vulnerabilities** through penetration testing
-- **Performance characteristics** under load
 - **Edge cases** and error conditions
 
 Run tests with:
 ```bash
 cd concept#-exercise-name/starter
 pip install -r requirements.txt
-pytest test_*.py -v
+pytest test_*.py -v -s
 ```
 
 Remember: The goal isn't to distrust AI-generated code, but to collaborate with AI responsibly while maintaining professional engineering standards.

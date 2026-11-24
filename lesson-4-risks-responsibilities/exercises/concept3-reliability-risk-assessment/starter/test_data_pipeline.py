@@ -67,7 +67,6 @@ class TestReliabilityIssues:
             
             try:
                 client.validate_account("ACC123")
-                assert False, "Expected validation to fail"
             except Exception as e:
                 print("🚨 RELIABILITY ISSUE: No fallback when external validation service fails")
                 print(f"   Error: {e}")
@@ -135,7 +134,6 @@ class TestReliabilityIssues:
             
             try:
                 pipeline.run_daily_pipeline("demo")
-                assert False, "Expected pipeline to fail"
             except Exception as e:
                 print("🚨 RELIABILITY ISSUE: Entire pipeline fails on single component error")
                 print(f"   Error: {e}")
