@@ -3,12 +3,15 @@ Tests to validate documentation quality.
 Checks that required documentation exists and meets quality standards.
 
 The README.md and ARCHITECTURE.md tests fail until you write those files
-in this exercise folder (the folder that holds main.py).
+in this exercise folder (the folder that holds main.py), and the docstring
+examples test fails until every example in the package's docstrings runs.
 """
 import pytest
 from pathlib import Path
 import ast
 import re
+import subprocess
+import sys
 
 
 # The exercise folder: this file sits in its tests/ folder
@@ -146,6 +149,37 @@ class TestSourceCodeDocumentation:
         These classes need docstrings: {', '.join(classes_without_docs)}
 
         Each class should explain its purpose and usage.
+        """
+
+    def test_docstring_examples_run(self):
+        """Every docstring example should run and show what the code prints."""
+        problems, examples = [], {}
+        for path in sorted(PACKAGE.rglob('*.py')):
+            rel = path.relative_to(PROJECT_ROOT).as_posix()
+            # The command learners run, from the exercise folder (examples/sample_expenses.csv resolves there),
+            # one process per module so one example's side effects can't reach another module's or these tests
+            result = subprocess.run([sys.executable, '-m', 'doctest', '-v', rel], cwd=PROJECT_ROOT,
+                                    capture_output=True, text=True)
+            tried = re.search(r'^(\d+) tests? in \d+ items?', result.stdout, re.M)
+            examples[rel] = int(tried.group(1)) if tried else 0
+            for line, source in re.findall(r'^File ".*", line (\d+), in \S+\nFailed example:\n\s+(.*)$',
+                                           result.stdout, re.M):
+                problems.append(f"{rel}:{line}: {source.strip()[:70]}")
+            if result.returncode != 0 and not tried:
+                problems.append(f"{rel}: doctest could not run it: {(result.stderr or result.stdout).strip()[-120:]}")
+
+        assert not problems, f"""
+        {len(problems)} docstring example(s) don't run as written. From this folder, see one module's in full:
+            python -m doctest -v expense_tracker/cli.py
+        Fix each so it runs and shows what the code really prints (examples/sample_expenses.csv is a file that exists).
+
+        """ + "\n".join(problems)
+
+        required = ['expense_tracker/data/transaction_loader.py', 'expense_tracker/reports/report_mode.py',
+                    'expense_tracker/reports/report_factory.py', 'expense_tracker/cli.py']
+        without = [rel for rel in required if not examples.get(rel)]
+        assert not without, f"""
+        These modules need at least one docstring example that runs: {', '.join(without)}
         """
 
 
