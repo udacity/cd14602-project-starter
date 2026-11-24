@@ -4,17 +4,20 @@ These tests define the contract that refactoring must maintain.
 """
 import pytest
 from io import StringIO
+from pathlib import Path
 import sys
 
 
 def get_cli_interface():
-    """Get the CLI interface class (v1 or v2)."""
-    try:
+    """Get the CLI interface class: v2 once cli_interface_v2.py exists, else v1.
+
+    A v2 that fails to import fails these tests; it never falls back to v1.
+    """
+    if Path(__file__).with_name('cli_interface_v2.py').exists():
         from cli_interface_v2 import CLIInterface
         return CLIInterface
-    except ImportError:
-        from cli_interface_v1 import CLIInterface
-        return CLIInterface
+    from cli_interface_v1 import CLIInterface
+    return CLIInterface
 
 
 @pytest.fixture

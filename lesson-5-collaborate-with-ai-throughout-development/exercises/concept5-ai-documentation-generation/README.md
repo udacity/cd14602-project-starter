@@ -7,7 +7,8 @@ are on the **Exercise: AI Documentation Generation** page.
 
 - `starter/`: the finished expense tracker, cleaned up after Exercise 4, with no `README.md` or `ARCHITECTURE.md`
   yet. `documentation_requirements.md` lists what each document needs, and
-  `tests/test_documentation_quality.py` checks them.
+  `tests/test_documentation_quality.py` checks them: the README's Installation and Usage sections and a
+  code example with `python main.py`, and the architecture document's modules (by name) and design pattern.
 - `solution/`: the same project with `README.md` (for users), `ARCHITECTURE.md` (for developers) and improved
   docstrings.
 - `PROMPTS.md`: the solution video's prompts, matched to this exercise's files.

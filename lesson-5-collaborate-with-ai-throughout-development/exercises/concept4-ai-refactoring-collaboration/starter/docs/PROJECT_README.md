@@ -23,8 +23,7 @@ A command-line expense tracking and reporting tool built with Python following S
 ### Installation
 
 ```bash
-# Clone or download the project
-cd expense_tracker
+# Run every command from the folder that holds main.py
 
 # No installation required - uses Python standard library only
 ```
@@ -103,7 +102,6 @@ See `docs/IMPLEMENTATION_GUIDE.md` for detailed implementation notes.
 
 - `docs/IMPLEMENTATION_GUIDE.md` - Detailed implementation notes for each interface
 - `docs/PROJECT_STRUCTURE.md` - Complete project structure reference
-- `docs/ARCHITECTURE.md` - Architecture decisions and design patterns
 
 ## License
 

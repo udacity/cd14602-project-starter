@@ -21,6 +21,17 @@ from expense_tracker.domain.exceptions import (
 )
 
 
+def _positive_int(value: str) -> int:
+    """argparse type for --top-n: a whole number of 1 or more."""
+    try:
+        number = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"invalid int value: '{value}'")
+    if number < 1:
+        raise argparse.ArgumentTypeError(f"must be 1 or more, got {number}")
+    return number
+
+
 class ExpenseTrackerCLI:
     """
     Command-line interface orchestrator for expense tracker.
@@ -90,7 +101,7 @@ Available report types:
 
         parser.add_argument(
             '--top-n',
-            type=int,
+            type=_positive_int,
             default=10,
             metavar='N',
             help='Number of top expenses to show (for "top" report, default: 10)'
@@ -201,10 +212,8 @@ def main() -> NoReturn:
     """
     Main entry point for console script.
 
-    This function is called when running:
-        python -m expense_tracker
-        or
-        expense-tracker (if installed)
+    This function is called by main.py:
+        python main.py expenses.csv
 
     Example:
         >>> if __name__ == '__main__':

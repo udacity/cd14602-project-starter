@@ -9,7 +9,7 @@ and must still pass after every change. The steps are on the **Exercise: AI Refa
   - `cli_interface_v1.py`: a display module that works but repeats its report and error blocks, writes its widths,
     separators and titles as literals, and has no type hints. It is a standalone module: it takes a dictionary
     (`{"mode": ..., "data": ..., "total": ...}`), not the package's report text;
-  - `test_cli_interface.py`: its 6 tests. They load `cli_interface_v2.py` when it can be imported, else v1.
+  - `test_cli_interface.py`: its 6 tests. They use `cli_interface_v2.py` once it exists (an import error in it fails them), else v1.
 - `solution/`: the same, plus one refactoring: `cli_interface_v2.py` and `refactoring_notes.md`.
 - `PROMPTS.md`: the solution video's prompts, matched to this exercise's files.
 

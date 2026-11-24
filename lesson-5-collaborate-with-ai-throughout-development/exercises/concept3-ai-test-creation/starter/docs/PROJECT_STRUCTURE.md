@@ -10,8 +10,7 @@ expense_tracker/
 │   ├── domain/                  # Domain layer (core models)
 │   │   ├── __init__.py
 │   │   ├── models.py            # Transaction, ValidationResult data models
-│   │   ├── exceptions.py        # Custom exception hierarchy
-│   │   └── validators.py        # Data validation utilities (stub)
+│   │   └── exceptions.py        # Custom exception hierarchy
 │   │
 │   ├── data/                    # Data access layer
 │   │   ├── __init__.py
@@ -86,16 +85,6 @@ expense_tracker/
 **Dependencies**: None (stdlib only)
 **Tests**: Covered in integration tests
 
-#### `validators.py` (Stub - To Be Implemented)
-- Utility functions for data validation
-- Date format validation
-- Amount validation
-- Category/description validation
-
-**Size**: ~80 lines (estimated)
-**Dependencies**: `datetime`, `decimal`
-**Tests**: To be added
-
 ---
 
 ### Data Layer (`expense_tracker/data/`)
@@ -169,7 +158,6 @@ date,amount,category,description
 
 #### `formatters.py` (Stubs Defined)
 - `format_currency(amount: Decimal, symbol: str) -> str`
-- `format_table(rows: List[Dict], headers: List[str], ...) -> str`
 - `format_separator(width: int, char: str) -> str`
 - `format_header(title: str, width: int, underline_char: str) -> str`
 - `format_summary_line(label: str, value: str, width: int) -> str`
@@ -334,7 +322,6 @@ pip install pytest mypy black coverage
 |------|-------|--------|
 | `domain/models.py` | ~100 | ✅ Implemented |
 | `domain/exceptions.py` | ~80 | ✅ Implemented |
-| `domain/validators.py` | ~80 | ⏳ Stub |
 | `data/transaction_loader.py` | ~140 | ⏳ Interfaces only |
 | `reports/report_mode.py` | ~200 | ⏳ Interfaces only |
 | `reports/report_factory.py` | ~100 | ✅ Implemented |
@@ -362,7 +349,7 @@ from expense_tracker.reports.report_mode import ReportMode
 from expense_tracker.reports.report_factory import ReportFactory
 
 # From presentation layer
-from expense_tracker.presentation.formatters import format_currency, format_table
+from expense_tracker.presentation.formatters import format_currency
 ```
 
 ### External Usage

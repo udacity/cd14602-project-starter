@@ -6,7 +6,6 @@ in the terminal with proper alignment, borders, and visual hierarchy.
 """
 
 from decimal import Decimal
-from typing import List, Dict, Any
 
 
 def format_currency(amount: Decimal, symbol: str = '$') -> str:
@@ -27,46 +26,6 @@ def format_currency(amount: Decimal, symbol: str = '$') -> str:
         '$42.50'
     """
     return f"{symbol}{amount:,.2f}"
-
-
-def format_table(
-    rows: List[Dict[str, Any]],
-    headers: List[str],
-    column_widths: Dict[str, int] | None = None,
-    align: Dict[str, str] | None = None
-) -> str:
-    """
-    Format data as aligned table with headers.
-
-    Args:
-        rows: List of dictionaries with column data
-        headers: List of column header names (keys in row dicts)
-        column_widths: Optional dict mapping header to width (auto-calculated if None)
-        align: Optional dict mapping header to alignment ('left', 'right', 'center')
-               Defaults to 'left' for text, 'right' for numbers
-
-    Returns:
-        Multi-line string containing formatted table
-
-    Example:
-        >>> rows = [
-        ...     {'name': 'Food', 'amount': Decimal('42.50'), 'count': 5},
-        ...     {'name': 'Transport', 'amount': Decimal('120.00'), 'count': 2},
-        ... ]
-        >>> headers = ['name', 'amount', 'count']
-        >>> print(format_table(rows, headers))
-        Name         Amount   Count
-        --------------------------
-        Food         $42.50       5
-        Transport   $120.00       2
-
-    Implementation notes:
-        - Auto-detect column widths based on content
-        - Right-align numeric columns by default
-        - Add separator line after headers
-        - Handle None/missing values gracefully
-    """
-    raise NotImplementedError("format_table() must be implemented")
 
 
 def format_separator(width: int = 80, char: str = '-') -> str:
