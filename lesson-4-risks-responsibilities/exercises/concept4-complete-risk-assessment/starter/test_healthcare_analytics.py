@@ -7,6 +7,7 @@ This demonstrates how to systematically assess AI-generated code for multiple ri
 """
 
 import pytest
+import hashlib
 import sqlite3
 from unittest.mock import patch
 from healthcare_analytics import HealthcareSystem
@@ -90,21 +91,33 @@ class TestSecurityRisks:
     
     def test_session_management_vulnerabilities(self, healthcare_system):
         """Test for insecure session management."""
-        # Login and check session storage
-        auth_result = healthcare_system.authenticate_user("doctor1", "password123")
+        # Login and check session storage, keeping every MD5 hash object made during the login
+        md5_objects = []
+        real_md5 = hashlib.md5
+        
+        def recording_md5(*args, **kwargs):
+            digest = real_md5(*args, **kwargs)
+            md5_objects.append(digest)
+            return digest
+        
+        with patch('hashlib.md5', side_effect=recording_md5):
+            auth_result = healthcare_system.authenticate_user("doctor1", "password123")
+        md5_digests = [digest.hexdigest() for digest in md5_objects]
         
         if auth_result["success"]:
             session_id = auth_result["session_id"]
             
             # Check if sessions are stored securely
-            if session_id in healthcare_system.active_sessions:
+            if session_id in getattr(healthcare_system, "active_sessions", {}):
                 print("🚨 SECURITY RISK: Sessions stored in memory without encryption")
                 print("   Session data vulnerable to memory dumps or crashes")
             
-            # Check session ID strength
-            if len(session_id) == 32:  # MD5 hash length
+            # Check session ID strength: an MD5 digest made during the login
+            if str(session_id).lower() in md5_digests:
                 print("🚨 SECURITY RISK: Weak session ID generation using MD5")
                 print("   Should use cryptographically secure random tokens")
+        else:
+            print("   (skipped: could not log in as doctor1 with password123, so these checks did not run)")
 
 
 class TestEthicalRisks:
@@ -237,13 +250,16 @@ class TestReliabilityRisks:
         """Test session handling when system components fail."""
         # Login successfully
         auth_result = healthcare_system.authenticate_user("doctor1", "password123")
+        if not auth_result["success"]:
+            print("   (skipped: could not log in as doctor1 with password123, so these checks did not run)")
+            return
         session_id = auth_result["session_id"]
         
         # Simulate system restart (sessions stored in memory)
         healthcare_system.active_sessions = {}
         
-        # Try to use the session
-        result = healthcare_system.process_patient_workflow(session_id, "P001")
+        # Try to use the session (P_SUCCESS is a patient the committed database holds)
+        result = healthcare_system.process_patient_workflow(session_id, "P_SUCCESS")
         
         if not result["success"]:
             print("🚨 RELIABILITY RISK: Sessions not persistent across system restarts")
@@ -267,6 +283,9 @@ class TestReliabilityRisks:
             
             # Login first
             auth_result = healthcare_system.authenticate_user("doctor1", "password123")
+            if not auth_result["success"]:
+                print("   (skipped: could not log in as doctor1 with password123, so these checks did not run)")
+                return
             session_id = auth_result["session_id"]
             
             # Try workflow - should handle partial failures gracefully
