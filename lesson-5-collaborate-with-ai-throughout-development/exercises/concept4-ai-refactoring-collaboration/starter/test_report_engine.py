@@ -433,17 +433,17 @@ class TestReportGenerationErrors:
 
     def test_loader_returns_none_instead_of_list(self, report_engine, mock_loader, mock_mode):
         """
-        Test that TypeError is raised when loader returns None instead of list.
+        Test that the mode's error passes through when loader returns None instead of list.
 
-        This critical edge case catches bugs in loader implementations where
-        None is returned instead of an empty list or raising an exception.
-        The error should occur when mode tries to iterate over None, which
-        real ReportMode implementations would do.
+        This edge case catches loader bugs where None is returned instead of
+        an empty list or an exception. The engine passes None on; a mode that
+        iterates its input raises TypeError, as this mock does. (The package's
+        report modes check first and raise EmptyDatasetError for None.)
         """
         # Arrange
         mock_loader.load.return_value = None
 
-        # Configure mock to behave like real mode: raise TypeError when given None
+        # Configure the mock as a mode that iterates its input: None raises TypeError
         def process_with_validation(transactions):
             if transactions is None:
                 raise TypeError("'NoneType' object is not iterable")

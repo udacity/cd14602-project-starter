@@ -48,10 +48,10 @@ class TestReadmeQuality:
         """
 
     def test_has_code_examples(self):
-        """Should include code examples."""
+        """Should include code examples that show how to run the tool."""
         content = README.read_text() if README.exists() else ''
-        assert '```' in content, """
-        Include code examples in ```code blocks```.
+        assert '```' in content and 'python main.py' in content, """
+        Include code examples in ```code blocks```, with the command that runs the tool (python main.py ...).
 
         Example:
         ```bash
@@ -81,10 +81,13 @@ class TestArchitectureDocQuality:
         """
 
     def test_describes_components(self):
-        """Should describe system components."""
+        """Should describe the real modules."""
         content = ARCHITECTURE.read_text().lower() if ARCHITECTURE.exists() else ''
-        assert 'component' in content or 'module' in content, """
-        Describe the system components/modules and their responsibilities.
+        modules = ['transaction_loader', 'report_mode', 'report_factory', 'formatters', 'models', 'cli']
+        named = [m for m in modules if m in content]
+        assert len(named) >= 3, f"""
+        Describe the system's modules and their responsibilities, by name: found {named or 'none'} of
+        {modules}; name at least 3.
         """
 
     def test_explains_design_patterns(self):

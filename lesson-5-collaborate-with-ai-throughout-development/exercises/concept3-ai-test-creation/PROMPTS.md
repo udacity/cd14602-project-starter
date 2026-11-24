@@ -113,7 +113,7 @@ Add test cases for two critical edge cases to test_report_engine.py
 
 <edge_cases_to_add>
 1. Test loader returning None instead of list
-   - Should raise TypeError with helpful message
+   - Should raise an error, not return a report (the package's report modes raise EmptyDatasetError for None)
 
 2. Test mode.process_transactions raising unexpected exception
    - Should propagate the exception with context

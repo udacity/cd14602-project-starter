@@ -6,6 +6,7 @@ This module defines the contract for loading transactions from various sources
 """
 
 import csv
+import re
 from abc import ABC, abstractmethod
 from datetime import date
 from decimal import Decimal, InvalidOperation
@@ -276,10 +277,10 @@ class CSVTransactionLoader(TransactionLoader):
             ValidationError: If any field is invalid
         """
         # Extract and strip whitespace from all fields
-        date_str = row.get('date', '').strip()
-        amount_str = row.get('amount', '').strip()
-        category = row.get('category', '').strip()
-        description = row.get('description', '').strip()
+        date_str = (row.get('date') or '').strip()
+        amount_str = (row.get('amount') or '').strip()
+        category = (row.get('category') or '').strip()
+        description = (row.get('description') or '').strip()
 
         # Validate required fields are not empty
         if not date_str:
@@ -293,6 +294,8 @@ class CSVTransactionLoader(TransactionLoader):
 
         # Validate and parse date
         try:
+            if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', date_str):
+                raise ValueError(date_str)
             transaction_date = date.fromisoformat(date_str)
         except ValueError as e:
             raise ValidationError(
@@ -308,6 +311,11 @@ class CSVTransactionLoader(TransactionLoader):
                 f"Invalid amount '{amount_str}' (must be a number)",
                 row_number=row_number
             ) from e
+        if not amount.is_finite():
+            raise ValidationError(
+                f"Invalid amount '{amount_str}' (must be a number)",
+                row_number=row_number
+            )
 
         # Validate amount is positive
         if amount <= 0:
